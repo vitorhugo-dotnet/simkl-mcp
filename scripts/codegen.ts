@@ -224,13 +224,16 @@ function generateAnnotations(method: string, path: string): string {
   return annotations.length > 0 ? `annotations: { ${annotations.join(', ')} }` : '';
 }
 
-function generateHandler(path: string, method: string, params: any[], responseFormat: any, toolName: string, flattenedFields: Record<string, string>) {
+function generateHandler(path: string, method: string, params: any[], responseFormat: any, toolName: string, flattenedFields: Record<string, string>, requestPath?: { helper: string; args: string[] }, authorization?: string) {
   const queryParams = params.filter((p: any) => p.in === 'query' && p.name !== 'client_id').map((p: any) => p.name);
   const hasBody = method === 'post' || method === 'put' || method === 'patch';
 
   let pathTemplate = path
     .replace(/:(\w+)/g, '${encodePathValue(args.$1, "$1")}')
     .replace(/\?{(\w+)}/g, '');
+  const requestPathExpression = requestPath
+    ? `${requestPath.helper}(${requestPath.args.join(', ')})`
+    : `\`${pathTemplate}\``;
 
   const parts: string[] = [`method: '${method.toUpperCase()}'`];
 
@@ -251,12 +254,16 @@ function generateHandler(path: string, method: string, params: any[], responseFo
     }
   }
 
+  if (authorization !== undefined) {
+    parts.push(`authorization: '${authorization}'`);
+  }
+
   const formatResponse = responseFormat?.type === 'json'
     ? 'JSON.stringify(result, null, 2)'
     : `formatters['${toolName}'](result, args)`;
 
   return `async (args: any) => {
-      const result = await client.request(\`${pathTemplate}\`, {
+      const result = await client.request(${requestPathExpression}, {
         ${parts.join(',\n        ')},
         token: getToken()
       });
@@ -275,13 +282,14 @@ const formatters: string[] = [];
 for (const config of toolsWhitelist) {
   const normalized = normalizePath(config.path);
   const pathEntry = spec.paths[normalized];
+  const schemaMethod = config.schemaMethod || config.method;
 
-  if (!pathEntry || !pathEntry[config.method]) {
+  if (!pathEntry || !pathEntry[schemaMethod]) {
     console.error(`WARNING: ${config.method} ${config.path} not found`);
     continue;
   }
 
-  const operation = pathEntry[config.method];
+  const operation = pathEntry[schemaMethod];
   let params = operation.parameters || [];
 
   if (operation.requestBody) {
@@ -296,7 +304,7 @@ for (const config of toolsWhitelist) {
   }
 
   const { schema, flattenedFields } = generateParamSchema(config.path, params, config.omitParams);
-  const handler = generateHandler(config.path, config.method, params, config.responseFormat, toolName, flattenedFields);
+  const handler = generateHandler(config.path, config.method, params, config.responseFormat, toolName, flattenedFields, config.requestPath, config.authorization);
 
   // extract clean description
   const summary = operation.summary || '';
