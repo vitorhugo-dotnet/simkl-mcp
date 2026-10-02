@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, mock, test } from 'bun:test';
 import { createPkcePair, exchangeAuthorizationCode, refreshSimklToken } from '../src/auth/simkl-oauth';
+import { USER_AGENT } from '../src/app-info';
 
 const env = {
   SIMKL_CLIENT_ID: 'client-id',
@@ -11,6 +12,17 @@ const originalFetch = globalThis.fetch;
 afterEach(() => {
   globalThis.fetch = originalFetch;
 });
+
+function discoveryResponse(): Response {
+  return Response.json({
+    issuer: 'https://simkl.com',
+    authorization_endpoint: 'https://simkl.com/oauth2/authorize',
+    token_endpoint: 'https://api.simkl.com/oauth2/token',
+    response_types_supported: ['code'],
+    token_endpoint_auth_methods_supported: ['client_secret_basic'],
+    code_challenge_methods_supported: ['S256'],
+  });
+}
 
 function encodeBase64Url(bytes: Uint8Array): string {
   return btoa(String.fromCharCode(...bytes)).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/g, '');
@@ -25,20 +37,23 @@ describe('Simkl OAuth utilities', () => {
   });
 
   test('exchanges an authorization code with form fields and Basic client authentication', async () => {
-    let captured: { url: string; init: RequestInit } | undefined;
+    const requests: Array<{ url: string; init: RequestInit }> = [];
     globalThis.fetch = mock(async (input: RequestInfo | URL, init?: RequestInit) => {
-      captured = { url: String(input), init: init! };
-      return Response.json({ access_token: 'access', refresh_token: 'refresh', expires_in: 604800 });
+      const url = new URL(String(input));
+      if (url.pathname === '/.well-known/oauth-authorization-server') return discoveryResponse();
+      requests.push({ url: String(input), init: init! });
+      return Response.json({ access_token: 'access', token_type: 'Bearer', refresh_token: 'refresh', expires_in: 604800 });
     }) as typeof fetch;
 
     const token = await exchangeAuthorizationCode({ code: 'one-time-code', codeVerifier: 'verifier' }, env);
-    expect(captured?.url).toBe('https://api.simkl.com/oauth2/token');
-    expect(captured?.init.method).toBe('POST');
-    const headers = new Headers(captured?.init.headers);
+    const captured = requests[0];
+    expect(captured.url).toBe('https://api.simkl.com/oauth2/token');
+    expect(captured.init.method).toBe('POST');
+    const headers = new Headers(captured.init.headers);
     expect(headers.get('Content-Type')).toBe('application/x-www-form-urlencoded');
-    expect(headers.get('User-Agent')).toBe('simkl-mcp/1.0.0');
+    expect(headers.get('User-Agent')).toBe(USER_AGENT);
     expect(headers.get('Authorization')).toBe(`Basic ${btoa('client-id:client-secret')}`);
-    const body = new URLSearchParams(String(captured?.init.body));
+    const body = new URLSearchParams(String(captured.init.body));
     expect(Object.fromEntries(body)).toEqual({
       code: 'one-time-code',
       code_verifier: 'verifier',
@@ -53,9 +68,10 @@ describe('Simkl OAuth utilities', () => {
 
   test('refreshes with a form grant and preserves the prior refresh token if omitted', async () => {
     let captured: RequestInit | undefined;
-    globalThis.fetch = mock(async (_input: RequestInfo | URL, init?: RequestInit) => {
+    globalThis.fetch = mock(async (input: RequestInfo | URL, init?: RequestInit) => {
+      if (new URL(String(input)).pathname === '/.well-known/oauth-authorization-server') return discoveryResponse();
       captured = init;
-      return Response.json({ access_token: 'new-access', expires_in: 3600 });
+      return Response.json({ access_token: 'new-access', token_type: 'Bearer', expires_in: 3600 });
     }) as typeof fetch;
 
     const token = await refreshSimklToken('long-lived-refresh', env);
@@ -68,7 +84,10 @@ describe('Simkl OAuth utilities', () => {
   });
 
   test('rejects non-OK token responses', async () => {
-    globalThis.fetch = mock(async () => new Response('rejected', { status: 401 })) as typeof fetch;
+    globalThis.fetch = mock(async (input: RequestInfo | URL) => {
+      if (new URL(String(input)).pathname === '/.well-known/oauth-authorization-server') return discoveryResponse();
+      return new Response('rejected', { status: 401 });
+    }) as typeof fetch;
     await expect(refreshSimklToken('refresh', env)).rejects.toThrow(/401/);
   });
 });
