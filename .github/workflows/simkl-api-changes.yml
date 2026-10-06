@@ -1,0 +1,74 @@
+name: Watch Simkl API Docs
+
+on:
+  schedule:
+    - cron: "17 */6 * * *"
+      timezone: "America/Sao_Paulo"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  issues: write
+
+jobs:
+  check-docs:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Download current Simkl docs
+        run: |
+          mkdir -p .simkl-doc-watch
+
+          curl -fsSL \
+            https://api.simkl.org/llms-full.txt \
+            -o .simkl-doc-watch/docs.txt
+
+          curl -fsSL \
+            https://api.simkl.org/openapi.json \
+            -o .simkl-doc-watch/openapi.json
+
+      - name: Detect changes
+        id: diff
+        run: |
+          if git diff --quiet -- .simkl-doc-watch; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+
+            git diff -- .simkl-doc-watch > /tmp/simkl-docs.diff
+
+            {
+              echo '## Simkl API documentation changed'
+              echo
+              echo 'Detected changes in `llms-full.txt` and/or `openapi.json`.'
+              echo
+              echo '```diff'
+              head -c 50000 /tmp/simkl-docs.diff
+              echo
+              echo '```'
+            } > /tmp/issue.md
+          fi
+
+      - name: Create GitHub issue
+        if: steps.diff.outputs.changed == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh issue create \
+            --title "Simkl API documentation changed" \
+            --body-file /tmp/issue.md \
+            --label "simkl-docs"
+
+      - name: Save new snapshot
+        if: steps.diff.outputs.changed == 'true'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          git add .simkl-doc-watch
+
+          git commit -m "chore: update Simkl API docs snapshot"
+          git push
