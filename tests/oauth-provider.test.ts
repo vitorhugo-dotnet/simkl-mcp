@@ -70,7 +70,13 @@ class MemoryKV {
 
 beforeEach(() => { Date.now = () => 1_000_000; });
 beforeAll(async () => {
-  mock.module('cloudflare:workers', () => ({ WorkerEntrypoint: class {}, DurableObject: class {}, env: {} }));
+  mock.module('cloudflare:workers', () => ({
+    WorkerEntrypoint: class {},
+    DurableObject: class {},
+    RpcTarget: class {},
+    exports: {},
+    env: {},
+  }));
   mock.module('cloudflare:email', () => ({ EmailMessage: class {} }));
   ({ OAuthProvider } = await import('@cloudflare/workers-oauth-provider'));
   ({ createSimklTokenExchangeCallback, createOAuthProvider } = await import('../src/index.js'));
@@ -140,7 +146,7 @@ describe('Simkl provider token exchange callback', () => {
     await tokenRequestStarted;
     expect(globalThis.fetch).toHaveBeenCalledTimes(2);
     expect(tokenRequests).toBe(1);
-    expect(atob(authorization!.slice('Basic '.length))).toBe('request-a:secret-a');
+    expect(atob(authorization!.slice('Basic '.length))).toBe('request%2Da:secret%2Da');
     resolveResponse(tokenResponse('access-new'));
     const [a, b] = await Promise.all([first, second]);
     expect(a.newProps).toEqual(b.newProps);
@@ -171,10 +177,10 @@ describe('Simkl provider token exchange callback', () => {
     const secondRequestCallback = createSimklTokenExchangeCallback(env('second-client', 'second-secret'));
     await firstRequestCallback(opts);
     const firstAuthorization = authorization;
-    expect(atob(firstAuthorization!.slice('Basic '.length))).toBe('first-client:first-secret');
+    expect(atob(firstAuthorization!.slice('Basic '.length))).toBe('first%2Dclient:first%2Dsecret');
     await secondRequestCallback(opts);
     expect(authorization).not.toBe(firstAuthorization);
-    expect(atob(authorization!.slice('Basic '.length))).toBe('second-client:second-secret');
+    expect(atob(authorization!.slice('Basic '.length))).toBe('second%2Dclient:second%2Dsecret');
   });
 
   it('routes a request through the provider created for its Worker env', async () => {

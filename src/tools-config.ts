@@ -32,7 +32,11 @@ export const toolsWhitelist: ToolConfig[] = [
   }},
   { path: '/scrobble/pause', method: 'post', responseFormat: {
     type: 'simple',
-    template: (_: any, args: any) => `paused at ${args.progress}%: ${args.movie?.title || args.show?.title}`
+    template: (_: any, args: any) => {
+      const body = args.body || args;
+      const title = body.movie?.title || body.show?.title || body.anime?.title;
+      return `paused at ${body.progress}%${title ? `: ${title}` : ''}`;
+    }
   }},
   { path: '/scrobble/stop', method: 'post', responseFormat: {
     type: 'simple',

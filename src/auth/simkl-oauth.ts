@@ -38,7 +38,12 @@ export async function exchangeAuthorizationCode(
   env: SimklOAuthEnv
 ): Promise<SimklTokenSet> {
   const { authorizationServer, client, clientAuth } = await getOAuthClient(env);
-  const callbackParameters = new URLSearchParams({ code: input.code });
+  const callbackParameters = oauth.validateAuthResponse(
+    authorizationServer,
+    client,
+    new URLSearchParams({ code: input.code }),
+    oauth.expectNoState
+  );
 
   let tokenResponse: oauth.TokenEndpointResponse;
   try {
@@ -128,9 +133,10 @@ function toSimklTokenSet(
 }
 
 function throwTokenError(error: unknown): never {
-  const candidate = error as { status?: unknown; code?: unknown } | null;
-  if (candidate && Number.isInteger(candidate.status) && (candidate.status as number) >= 100) {
-    throw new Error(`Simkl token request failed with status ${candidate.status}`);
+  const candidate = error as { status?: unknown; code?: unknown; cause?: { status?: unknown } } | null;
+  const status = candidate?.status ?? candidate?.cause?.status;
+  if (Number.isInteger(status) && (status as number) >= 100) {
+    throw new Error(`Simkl token request failed with status ${status}`);
   }
   if (candidate?.code === 'OAUTH_RESPONSE_IS_NOT_JSON') {
     throw new Error('Simkl token response was not valid JSON');
