@@ -50,9 +50,9 @@ describe('Simkl OAuth utilities', () => {
     expect(captured.url).toBe('https://api.simkl.com/oauth2/token');
     expect(captured.init.method).toBe('POST');
     const headers = new Headers(captured.init.headers);
-    expect(headers.get('Content-Type')).toBe('application/x-www-form-urlencoded');
+    expect(headers.get('Content-Type')?.split(';', 1)[0]).toBe('application/x-www-form-urlencoded');
     expect(headers.get('User-Agent')).toBe(USER_AGENT);
-    expect(headers.get('Authorization')).toBe(`Basic ${btoa('client-id:client-secret')}`);
+    expect(headers.get('Authorization')).toBe(`Basic ${btoa('client%2Did:client%2Dsecret')}`);
     const body = new URLSearchParams(String(captured.init.body));
     expect(Object.fromEntries(body)).toEqual({
       code: 'one-time-code',
