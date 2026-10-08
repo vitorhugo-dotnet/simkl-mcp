@@ -34,6 +34,17 @@ export interface PaginatedResult<T> {
   pagination: PaginationInfo | null;
 }
 
+export interface SimklResponseHeaders {
+  rateLimitLimit?: string;
+  rateLimitRemaining?: string;
+  retryAfter?: string;
+  lastModified?: string;
+}
+
+interface RequestResult<T> extends PaginatedResult<T> {
+  headers: SimklResponseHeaders;
+}
+
 export class SimklClient {
   private baseUrl: string;
   private clientId: string;
@@ -46,6 +57,11 @@ export class SimklClient {
   async request<T = unknown>(endpoint: string, options: RequestOptions): Promise<T> {
     const { data } = await this.doRequest<T>(endpoint, options);
     return data;
+  }
+
+  async requestWithMetadata<T = unknown>(endpoint: string, options: RequestOptions): Promise<{ data: T; headers: SimklResponseHeaders }> {
+    const { data, headers } = await this.doRequest<T>(endpoint, options);
+    return { data, headers };
   }
 
   async requestPaginated<T = unknown>(
@@ -98,7 +114,7 @@ export class SimklClient {
     };
   }
 
-  private async doRequest<T = unknown>(endpoint: string, options: RequestOptions): Promise<PaginatedResult<T>> {
+  private async doRequest<T = unknown>(endpoint: string, options: RequestOptions): Promise<RequestResult<T>> {
     const url = this.buildUrl(endpoint, options.query);
     const headers = this.buildHeaders(options.token, options.authorization);
 
@@ -115,17 +131,18 @@ export class SimklClient {
     try {
       response = await fetch(url, init);
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'unknown fetch error';
-      throw new SimklApiError(`simkl api request failed: ${message}`, 0, null);
+      throw new SimklApiError('simkl api request failed', 0, null);
     }
 
+    const responseHeaders = this.parseResponseHeaders(response);
+
     if (response.status === 204) {
-      return { data: {} as T, pagination: null };
+      return { data: {} as T, pagination: null, headers: responseHeaders };
     }
 
     if (response.status === 302) {
       const location = response.headers.get('Location') || response.headers.get('location');
-      return { data: { redirectUrl: location } as T, pagination: null };
+      return { data: { redirectUrl: location } as T, pagination: null, headers: responseHeaders };
     }
 
     const responseText = await this.readResponseBody(response);
@@ -134,12 +151,13 @@ export class SimklClient {
       throw new SimklApiError(
         `simkl api error: ${response.status} ${response.statusText}`,
         response.status,
-        responseText
+        responseText,
+        responseHeaders
       );
     }
 
     if (!responseText) {
-      return { data: null as T, pagination: this.parsePaginationInfo(response) };
+      return { data: null as T, pagination: this.parsePaginationInfo(response), headers: responseHeaders };
     }
 
     try {
@@ -147,6 +165,7 @@ export class SimklClient {
       return {
         data,
         pagination: this.parsePaginationInfo(response),
+        headers: responseHeaders,
       };
     } catch {
       throw new SimklApiError('simkl api error: invalid json response', response.status, responseText);
@@ -190,7 +209,7 @@ export class SimklClient {
     return headers;
   }
 
-  private async readResponseBody(response: Response, limit = 500_000): Promise<string> {
+  private async readResponseBody(response: Response, limit = 2 * 1024 * 1024): Promise<string> {
     const reader = response.body?.getReader();
     if (!reader) {
       const text = await response.text();
@@ -202,12 +221,14 @@ export class SimklClient {
 
     const decoder = new TextDecoder();
     let result = '';
+    let bytesRead = 0;
 
     while (true) {
       const { done, value } = await reader.read();
       if (done) break;
+      bytesRead += value.byteLength;
       result += decoder.decode(value, { stream: true });
-      if (result.length > limit) {
+      if (bytesRead > limit) {
         reader.cancel().catch(() => {});
         throw new SimklApiError('simkl api error: response too large', response.status, result.slice(0, 1024));
       }
@@ -215,6 +236,21 @@ export class SimklClient {
 
     result += decoder.decode();
     return result;
+  }
+
+  private parseResponseHeaders(response: Response): SimklResponseHeaders {
+    const headers: SimklResponseHeaders = {};
+    const values: Array<[keyof SimklResponseHeaders, string]> = [
+      ['rateLimitLimit', 'X-RateLimit-Limit'],
+      ['rateLimitRemaining', 'X-RateLimit-Remaining'],
+      ['retryAfter', 'Retry-After'],
+      ['lastModified', 'Last-Modified'],
+    ];
+    for (const [property, name] of values) {
+      const value = response.headers.get(name);
+      if (value !== null) headers[property] = value;
+    }
+    return headers;
   }
 
   private parsePaginationInfo(response: Response): PaginationInfo | null {
@@ -244,12 +280,25 @@ export class SimklClient {
 }
 
 export class SimklApiError extends Error {
+  public upstreamCode: string;
+
   constructor(
     message: string,
     public statusCode: number,
-    public responseBody: string | null
+    responseBody: string | null,
+    public headers: SimklResponseHeaders = {}
   ) {
     super(message);
     this.name = 'SimklApiError';
+    let code = '';
+    try {
+      const parsed = JSON.parse(responseBody || '') as { error?: unknown };
+      if (typeof parsed.error === 'string' && ['rate_limit', 'user_limit_exceeded', 'app_limit_exceeded', 'user_token_required'].includes(parsed.error)) {
+        code = parsed.error;
+      }
+    } catch {
+      // Keep the raw upstream response out of the error object.
+    }
+    this.upstreamCode = code;
   }
 }
