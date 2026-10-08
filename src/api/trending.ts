@@ -1,5 +1,5 @@
 export type SimklMediaType = 'tv' | 'movies' | 'anime';
-export type SimklTrendingInterval = 'daily' | 'weekly' | 'monthly';
+export type SimklTrendingInterval = 'today' | 'week' | 'month' | 'daily' | 'weekly' | 'monthly';
 
 export interface SimklGenre {
   name: string;
@@ -22,6 +22,9 @@ export class SimklGenreInputError extends Error {
 }
 
 const timeframeByInterval: Record<SimklTrendingInterval, string> = {
+  today: 'today',
+  week: 'week',
+  month: 'month',
   daily: 'today',
   weekly: 'week',
   monthly: 'month',
