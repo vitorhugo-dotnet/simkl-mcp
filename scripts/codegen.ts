@@ -292,6 +292,7 @@ const tools: string[] = [];
 const formatters: string[] = [];
 
 for (const config of toolsWhitelist) {
+  if (config.omitFromGenerated) continue;
   if (config.custom) {
     tools.push(`
     server.registerTool(

@@ -6,6 +6,8 @@ import { z } from 'zod';
 import { SimklClient } from './api/client.js';
 import { simklTrendingPath } from './api/trending.js';
 import { getCurrentUserSettings, getUserStats } from './api/user.js';
+import { RewatchService } from './api/rewatches.js';
+import { registerRewatchTools } from './tools/rewatches.js';
 import { registerTools } from '../generated/tools.js';
 
 interface Env extends WorkerEnv, SimklOAuthEnv {}
@@ -32,7 +34,9 @@ export class SimklMCP extends McpAgent<Env, unknown, SimklAuthProps> {
       clientId: this.env?.SIMKL_CLIENT_ID || '',
     });
 
+    const rewatchService = new RewatchService(this.client, () => this.simklToken);
     registerTools(this.server, this.client, () => this.simklToken);
+    registerRewatchTools(this.server, rewatchService);
     this.registerCustomTools();
     this.registerResources();
   }

@@ -51,7 +51,16 @@ Configure remote MCP clients to use `https://your-worker.workers.dev/mcp` with S
 - **Sync/tracking**: `simkl_add_to_watchlist`, `simkl_mark_watched`, `simkl_remove_from_history`, `simkl_add_rating`, `simkl_get_watchlist`
 - **Discovery**: `simkl_get_trending_by_genre`, `simkl_get_trending_shows`, `simkl_get_trending_movies`, `simkl_get_trending_anime`, `simkl_get_best_shows`, `simkl_get_best_anime`, `simkl_get_show_by_id`, `simkl_get_movie_by_id`, `simkl_get_anime_by_id`, `simkl_get_show_episodes`, `simkl_get_anime_episodes`, `simkl_get_shows_by_genre`, `simkl_get_movies_by_genre`, `simkl_get_anime_by_genre`, `simkl_get_airing_shows`, `simkl_get_airing_anime`
 - **User**: `simkl_get_user_stats`, `simkl_my_stats`
+- **Rewatches**: `simkl_start_rewatch`, `simkl_update_rewatch`, `simkl_get_rewatches`, and `simkl_stop_watching` with optional explicit rewatch intent
 - **Resources**: `watchlist/{type}/{status}`, `trending/{type}/{interval}`
+
+### Rewatch sessions
+
+Rewatch tracking requires Simkl PRO or VIP. Start a session only when the user explicitly asks to rewatch an existing title; the MCP checks the account plan before writing. Keep the returned `rewatch_id` and provide it on every `simkl_update_rewatch` call. For shows and anime, Simkl marks a session completed when all aired regular episodes have been recorded; movies can be explicitly closed or completed.
+
+`simkl_get_rewatches` keeps canonical and rewatch rows distinguishable and requests full episode progress and watch timestamps. Choose `all` or one media type and a watch status. Supply `date_from` for incremental reads. Set `initial_sync=true` only for the first full read.
+
+To record a player rewatch, call `simkl_stop_watching` with `allow_rewatch=true` only after explicit user intent and progress of at least 80%. Ordinary stops default to no rewatch tracking. The tool returns Simkl's full response; only `rewatch_status` values `active`, `closed`, or `completed` confirm a saved session. `first_watch`, `too_soon`, `not_eligible`, and `pro_required` have distinct meanings. Do not retry an ambiguous write automatically; read sessions before deciding whether a retry is needed. Simkl enforces a two-day gap between repeat watches of an item and a limit of 50 sessions per item.
 
 ### Genre discovery
 
