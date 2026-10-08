@@ -13,6 +13,7 @@ interface ToolConfig {
   name?: string;
   responseFormat?: ResponseFormat;
   omitParams?: string[];
+  omitFromGenerated?: boolean;
   description?: string;
   extraQueryParams?: string[];
   custom?: {
@@ -62,7 +63,7 @@ export const toolsWhitelist: ToolConfig[] = [
       return `paused at ${body.progress}%${title ? `: ${title}` : ''}`;
     }
   }},
-  { path: '/scrobble/stop', method: 'post', responseFormat: {
+  { path: '/scrobble/stop', method: 'post', omitFromGenerated: true, responseFormat: {
     type: 'simple',
     template: (_: any, args: any) => `stopped: ${args.movie?.title || args.show?.title}`
   }},
