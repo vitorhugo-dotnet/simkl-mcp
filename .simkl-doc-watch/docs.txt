@@ -6145,6 +6145,12 @@ Source: https://api.simkl.org/api-reference/simkl/get-anime-genres
 **Not for TV / console / 10-foot apps.** The V1 genre-browse endpoints return a thin per-item shape (`title`, `year`, `poster`, `ids`, `ratings`, `rank`). Building a TV-app grid that shows overview text, full ratings, networks, runtimes, recommendations, or trailers would force one per-item refetch against the detail endpoint per visible card. **Wait for the V2 Beta API**, which returns the richer per-item shape TV-app surfaces need in a single call. If you're targeting TV / console / streaming-box clients, please hold off integrating these endpoints.
 </Warning>
 
+<Tip>
+**Just need this month's most watched titles in a genre? Use the [trending genre files](/api-reference/trending#by-genre-this-month) instead.** They are free: they don't count against any [rate limit](/resources/rate-limits#what-does-not-count) or a user's daily allowance, and they need no user token. Every call to this endpoint does count — against the user's daily allowance under [AUTH V2](/api-reference/auth-v2), where it also needs a user token, or your app's allowance under AUTH V1.
+
+A genre file is one cached request with no paging, and every item comes in the full trending shape (overview, trailer, ratings, runtime) rather than the thin shape above. Call this endpoint only for what the files don't cover: other sorts, the country / network / year filters, or anything beyond this month.
+</Tip>
+
 Browse anime filtered by genre, type, network, year, and sort order. Path is `/anime/genres/{genre}/{type}/{network}/{year}/{sort}` — all segments **required** (use `all` as the wildcard).
 
 This is the **5-segment** variant (no `country` segment — anime is dominated by Japanese productions, country filtering isn't useful here).
@@ -6187,6 +6193,7 @@ Bad path segments DO NOT return errors:
 | `500` | Server error |
 
 No `400` or `404` — bad segments fall back silently or return `null`.
+
 
 
 
@@ -6484,6 +6491,12 @@ Source: https://api.simkl.org/api-reference/simkl/get-movies-genres
 **Not for TV / console / 10-foot apps.** The V1 genre-browse endpoints return a thin per-item shape (`title`, `year`, `poster`, `ids`, `ratings`, `rank`). Building a TV-app grid that shows overview text, full ratings, networks, runtimes, recommendations, or trailers would force one per-item refetch against the detail endpoint per visible card. **Wait for the V2 Beta API**, which returns the richer per-item shape TV-app surfaces need in a single call. If you're targeting TV / console / streaming-box clients, please hold off integrating these endpoints.
 </Warning>
 
+<Tip>
+**Just need this month's most watched titles in a genre? Use the [trending genre files](/api-reference/trending#by-genre-this-month) instead.** They are free: they don't count against any [rate limit](/resources/rate-limits#what-does-not-count) or a user's daily allowance, and they need no user token. Every call to this endpoint does count — against the user's daily allowance under [AUTH V2](/api-reference/auth-v2), where it also needs a user token, or your app's allowance under AUTH V1.
+
+A genre file is one cached request with no paging, and every item comes in the full trending shape (overview, trailer, ratings, runtime) rather than the thin shape above. Call this endpoint only for what the files don't cover: other sorts, the country / network / year filters, or anything beyond this month.
+</Tip>
+
 Browse movies filtered by genre, country, year, and sort order. Path is `/movies/genres/{genre}/{type}/{country}/{year}/{sort}` — all segments **required** (use `all` as the wildcard).
 
 The `type` segment is reserved — always pass the literal value `movies`.
@@ -6526,6 +6539,7 @@ Bad path segments DO NOT return errors:
 | `500` | Server error |
 
 No `400` or `404` — bad segments fall back silently or return `null`.
+
 
 
 
@@ -6801,6 +6815,12 @@ Source: https://api.simkl.org/api-reference/simkl/get-tv-genres
 **Not for TV / console / 10-foot apps.** The V1 genre-browse endpoints return a thin per-item shape (`title`, `year`, `poster`, `ids`, `ratings`, `rank`). Building a TV-app grid that shows overview text, full ratings, networks, runtimes, recommendations, or trailers would force one per-item refetch against the detail endpoint per visible card. **Wait for the V2 Beta API**, which returns the richer per-item shape TV-app surfaces need in a single call. If you're targeting TV / console / streaming-box clients, please hold off integrating these endpoints.
 </Warning>
 
+<Tip>
+**Just need this month's most watched titles in a genre? Use the [trending genre files](/api-reference/trending#by-genre-this-month) instead.** They are free: they don't count against any [rate limit](/resources/rate-limits#what-does-not-count) or a user's daily allowance, and they need no user token. Every call to this endpoint does count — against the user's daily allowance under [AUTH V2](/api-reference/auth-v2), where it also needs a user token, or your app's allowance under AUTH V1.
+
+A genre file is one cached request with no paging, and every item comes in the full trending shape (overview, trailer, ratings, runtime) rather than the thin shape above. Call this endpoint only for what the files don't cover: other sorts, the country / network / year filters, or anything beyond this month.
+</Tip>
+
 Browse TV shows filtered by genre, type, country, network, year, and sort order. Path is `/tv/genres/{genre}/{type}/{country}/{network}/{year}/{sort}` — all segments **required** (use `all` as the wildcard).
 
 This is the **6-segment** variant (one more than movies + anime — TV has both `country` AND `network` filters).
@@ -6842,6 +6862,7 @@ Bad path segments DO NOT return errors:
 | `500` | Server error |
 
 No `400` or `404` — bad segments fall back silently or return `null`.
+
 
 
 
@@ -8145,10 +8166,12 @@ Every Sync write endpoint matches items by the `ids` object. See the full key li
 # Trending data files
 Source: https://api.simkl.org/api-reference/trending
 
-Pre-built JSON for Simkl's Most Watched lists — Today, Week, Month — for Movies, TV, and Anime. No API key required.
+Pre-built JSON for Simkl's Most Watched lists — Today, Week, Month — for Movies, TV, and Anime, plus this month's most watched in every genre. No API key required.
 
 <Note>
   **No auth required.** Trending data is public — send the standard [required URL parameters](/conventions/headers#required-url-parameters) (`client_id`, `app-name`, `app-version`) and a `User-Agent` header, but no user `Authorization` token.
+
+  **Free to use.** These files don't count against any [rate limit](/resources/rate-limits#what-does-not-count) — not your app's, and not a user's [AUTH V2](/api-reference/auth-v2) daily allowance. Wherever they cover what you show, use them instead of live API calls such as the `/genres` endpoints, which do count.
 </Note>
 
 <Tip>
@@ -8168,6 +8191,7 @@ Pre-built JSON for Simkl's Most Watched lists — Today, Week, Month — for Mov
   | `Simkl Most Watched` | `Most Watched on Simkl` | `Popular on Simkl` |
   | `Simkl Top 100 Movies` | `Top 100 on Simkl` | `Hot Right Now — Simkl` |
   | `Simkl Top Charts` | `Top Charts on Simkl` | `Charting on Simkl` |
+  | `Simkl Trending Horror Movies` | `Trending Horror Movies on Simkl` | `Most Watched Isekai Anime on Simkl` |
 
   **For commercial use without attribution**, [contact us](/support) — we're happy to discuss licensing.
 </Warning>
@@ -8190,6 +8214,8 @@ If your client *can* render hyperlinks — websites, browser extensions, web app
   </Card>
 </Columns>
 
+A row built from a [genre file](#by-genre-this-month) links to the same page for its type.
+
 Simkl provides pre-built JSON files with trending data **ranked by the number of watchers**. These are the same rankings displayed on Simkl's Most Watched pages for [Movies](https://simkl.com/movies/best-movies/most-watched/), [TV Shows](https://simkl.com/tv/best-shows/most-watched/), and [Anime](https://simkl.com/anime/best-anime/most-watched/).
 
 Each file is available in two sizes: **top 100** (`_100`) or **top 500** (`_500`) items. Titles with the most watchers are returned first.
@@ -8199,6 +8225,10 @@ Each file is available in two sizes: **top 100** (`_100`) or **top 500** (`_500`
 <Columns>
   <Card title="Sizes" icon="ruler">
     **Top 100** (`_100`) and **Top 500** (`_500`) per file.
+  </Card>
+
+  <Card title="By genre" icon="tags">
+    This month's most watched in every genre — one [genre file](#by-genre-this-month) each, month only, up to 500 items.
   </Card>
 
   <Card title="Last-Modified" icon="clock">
@@ -8213,14 +8243,17 @@ Each file is available in two sizes: **top 100** (`_100`) or **top 500** (`_500`
 | Today | Most watched titles over the last 24 hours | Every hour |
 | Week | Most watched titles over the last 7 days | Once a day |
 | Month | Most watched titles over the last 30 days | Once a day |
+| Genre | Most watched titles in one genre over the last 30 days | Once a day |
 | DVD releases | Latest popular DVD releases (Movies only) | Once a day |
 
 <Info>
-  **Regeneration is best-effort, not strictly precise.** The cadences above are targets — the actual job can take a few extra minutes (and occasionally longer) to finish. If your scheduled refresh hits a `304 Not Modified` right at the expected time, the new file just hasn't been generated yet; back off and retry in a few minutes rather than waiting another full cycle. See [SimklTrendingClient — drop-in SDK](#simkltrendingclient-sdk) for the recommended pattern.
+  **Regeneration is best-effort, not strictly precise.** The cadences above are targets — the actual job can take a few extra minutes (and occasionally longer) to finish. If your scheduled refresh hits a `304 Not Modified` right at the expected time, the new file just hasn't reached you yet; back off and retry in a few minutes rather than waiting another full cycle. See [SimklTrendingClient — drop-in SDK](#simkltrendingclient-sdk) for the recommended pattern.
+
+  **The CDN adds up to an hour.** Cloudflare keeps each file for up to **1 hour** (`Cache-Control: max-age=3600`) and is not cleared when a file is regenerated, so a new version can take up to an hour to replace the old one. An hourly `today` file can therefore be up to about two hours old when you read it. `Last-Modified` always tells you which version you have.
 </Info>
 
 <Warning>
-  **The file URLs ignore all query strings.** Don't add `?random=...` or `?nocache=...` — the CDN treats every variant as the same resource. Simkl regenerates the files on the schedule above and automatically clears them from the Cloudflare cache, so you'll always get the latest version on your next request — client-side cache-busting won't deliver newer data.
+  **The file URLs ignore all query strings.** Don't add `?random=...` or `?nocache=...` — the CDN treats every variant as the same resource, so client-side cache-busting won't deliver newer data. It only ever returns the copy Cloudflare is holding.
 </Warning>
 
 ## All trending data files
@@ -8252,6 +8285,84 @@ One category per file. Top-level response is the array directly (no wrapper obje
 | **Anime** | Today | [anime/today\_100.json](https://data.simkl.in/discover/trending/anime/today_100.json?client_id=YOUR_CLIENT_ID\&app-name=my-app-name\&app-version=1.0) | [anime/today\_500.json](https://data.simkl.in/discover/trending/anime/today_500.json?client_id=YOUR_CLIENT_ID\&app-name=my-app-name\&app-version=1.0) |
 | Anime | This week | [anime/week\_100.json](https://data.simkl.in/discover/trending/anime/week_100.json?client_id=YOUR_CLIENT_ID\&app-name=my-app-name\&app-version=1.0) | [anime/week\_500.json](https://data.simkl.in/discover/trending/anime/week_500.json?client_id=YOUR_CLIENT_ID\&app-name=my-app-name\&app-version=1.0) |
 | Anime | This month | [anime/month\_100.json](https://data.simkl.in/discover/trending/anime/month_100.json?client_id=YOUR_CLIENT_ID\&app-name=my-app-name\&app-version=1.0) | [anime/month\_500.json](https://data.simkl.in/discover/trending/anime/month_500.json?client_id=YOUR_CLIENT_ID\&app-name=my-app-name\&app-version=1.0) |
+
+### By genre (this month)
+
+This month's most watched titles in **every genre** — one file per genre, per type. Same CDN, same required parameters and `User-Agent`, same caching and attribution rules as every other file on this page, and just as free: no user token, and no rate limit or AUTH V2 allowance spent. For this month's most watched in a genre, use these instead of the `/genres` endpoints, where every call counts.
+
+**Start from the genre list.** Each type has an `index.json` listing the genres that have a file, sorted A–Z by `name`:
+
+```json movies/genre/index.json (first 3 of 20) theme={"theme":{"light":"github-light","dark":"vesper"}}
+[
+  { "name": "Action",    "slug": "action",    "count": 500 },
+  { "name": "Adventure", "slug": "adventure", "count": 500 },
+  { "name": "Animation", "slug": "animation", "count": 456 }
+]
+```
+
+`name` is the display label, `slug` names the genre's file, and `count` is how many items that file holds.
+
+| Type | Genre list | Example genre file | Genres today |
+| - | - | - | - |
+| **Movies** | [movies/genre/index.json](https://data.simkl.in/discover/trending/movies/genre/index.json?client_id=YOUR_CLIENT_ID\&app-name=my-app-name\&app-version=1.0) | [movies/genre/science-fiction\_month\_500.json](https://data.simkl.in/discover/trending/movies/genre/science-fiction_month_500.json?client_id=YOUR_CLIENT_ID\&app-name=my-app-name\&app-version=1.0) | 20 |
+| **TV** | [tv/genre/index.json](https://data.simkl.in/discover/trending/tv/genre/index.json?client_id=YOUR_CLIENT_ID\&app-name=my-app-name\&app-version=1.0) | [tv/genre/crime\_month\_500.json](https://data.simkl.in/discover/trending/tv/genre/crime_month_500.json?client_id=YOUR_CLIENT_ID\&app-name=my-app-name\&app-version=1.0) | 37 |
+| **Anime** | [anime/genre/index.json](https://data.simkl.in/discover/trending/anime/genre/index.json?client_id=YOUR_CLIENT_ID\&app-name=my-app-name\&app-version=1.0) | [anime/genre/isekai\_month\_500.json](https://data.simkl.in/discover/trending/anime/genre/isekai_month_500.json?client_id=YOUR_CLIENT_ID\&app-name=my-app-name\&app-version=1.0) | 47 |
+
+```text theme={"theme":{"light":"github-light","dark":"vesper"}}
+https://data.simkl.in/discover/trending/<type>/genre/index.json
+https://data.simkl.in/discover/trending/<type>/genre/<slug>_month_500.json
+```
+
+`<type>` is `movies`, `tv` or `anime`; `<slug>` comes from that type's `index.json`.
+
+<Warning>
+  **Read the slugs from `index.json` — don't hardcode them or build them from genre names.** The list can change. The same idea can also have a different slug per type: movies and TV use `science-fiction`, anime uses `sci-fi`. Show `name` from `index.json` as the label.
+</Warning>
+
+The slugs are the same as the `{genre}` values of [`GET /movies/genres`](/api-reference/simkl/get-movies-genres), [`GET /tv/genres`](/api-reference/simkl/get-tv-genres) and [`GET /anime/genres`](/api-reference/simkl/get-anime-genres), with two exceptions: TV `special-interest` has no file, and anime `hentai` has a file but is not in the `/anime/genres` list.
+
+<Warning>
+  **The genre lists include adult genres:** movies `erotica`, TV `erotica` and anime `hentai`. General-audience apps, and any app distributed through an app store, should skip these slugs.
+</Warning>
+
+**How genre files differ from the files above:**
+
+1. **This month only.** No `today` or `week`, no `_100` size, and no combined file.
+2. **`_500` means up to 500.** Small genres hold fewer — some under 10, such as TV `video-game-play` and anime `yaoi`. `count` in `index.json` tells you how many before you fetch.
+3. **Sorted by `watched`** — this month's watchers — highest first. Every item has at least 2 watchers.
+4. **Same items.** Each item has exactly the fields of an item in `<type>/month_500.json`, so [What's in each item](#whats-in-each-item) applies as-is.
+5. **Each genre file is its own ranking, not a slice of the main file.** Filtering the main 500 file by genre — including the SDK's `byGenre` and `bestOfGenre` recipes — only finds titles that made the overall top 500.
+6. **Don't re-check membership against an item's `genres` array.** In rare cases the file's genre is missing from it: TV `korean-drama` items don't list "Korean Drama". The file you fetched is the membership.
+7. **Updated once a day,** in the morning US Eastern time. Treat it like the other daily files: `refresh_seconds: 86400`, with the same back-off when a refresh returns `304` ([Update frequency](#update-frequency)).
+
+**Fetch one genre** — read the list, pick a slug, fetch that file:
+
+<CodeGroup>
+  ```bash curl theme={"theme":{"light":"github-light","dark":"vesper"}}
+  # 1. The genre list for one type
+  curl -H 'User-Agent: my-app-name/1.0' \
+    "https://data.simkl.in/discover/trending/anime/genre/index.json?client_id=YOUR_CLIENT_ID&app-name=my-app-name&app-version=1.0"
+
+  # 2. One genre, using a slug from that list
+  curl -H 'User-Agent: my-app-name/1.0' \
+    "https://data.simkl.in/discover/trending/anime/genre/isekai_month_500.json?client_id=YOUR_CLIENT_ID&app-name=my-app-name&app-version=1.0"
+  ```
+
+  ```js JavaScript theme={"theme":{"light":"github-light","dark":"vesper"}}
+  const params  = new URLSearchParams({ client_id: 'YOUR_CLIENT_ID', 'app-name': 'my-app-name', 'app-version': '1.0' });
+  const headers = { 'User-Agent': 'my-app-name/1.0' };
+  const base    = 'https://data.simkl.in/discover/trending/anime/genre';
+  const ADULT   = new Set(['erotica', 'hentai']);            // skip in general-audience apps
+
+  const genres = (await (await fetch(`${base}/index.json?${params}`, { headers })).json())
+    .filter(g => !ADULT.has(g.slug));
+
+  const genre = genres.find(g => g.slug === 'isekai') ?? genres[0];
+  const items = await (await fetch(`${base}/${genre.slug}_month_500.json?${params}`, { headers })).json();
+
+  console.log(`Most Watched ${genre.name} Anime on Simkl`, items.length, items[0]?.title);
+  ```
+</CodeGroup>
 
 ### DVD releases (movies only)
 
@@ -8431,6 +8542,8 @@ A single class that wires up the entire data flow. Tune the `CONFIG` block at th
 * **Namespace-safe** — every public symbol is prefixed `Simkl…` (`SimklTrendingClient`, `SimklTrendingConfig`, `SimklTrendingError`, `SIMKL_TRENDING_URLS`, etc.) so dropping the class into an existing app doesn't collide with your own `Config` / `Client` / `Entry` types.
 
 The only thing left to wire up per-platform is **background scheduling** (the OS-level periodic task that keeps the cache warm while your app is suspended) — see the comment at the bottom of each tab.
+
+The SDK doesn't load the [genre files](#by-genre-this-month) yet — they aren't in the Copy-paste JSON or the catalogs, so fetch them directly for now.
 
 ### Try it live
 
@@ -10811,7 +10924,7 @@ Per-title arrays (`movies`, `tv`, `anime`) all share the same base shape, with a
   "original_language": "en",
   "runtime": "1h 45m",
   "status": "ended",
-  "genres": ["Action", "Comedy", "Drama", "Romance"],
+  "genres": ["Comedy", "Drama", "Romance"],
   "trailer": "0ZDzsH3XGFA",
   "overview": "A happily engaged couple is put to the test...",
   "metadata": "March 26, 2026 • Budget $28M • Box office $121M",
@@ -10987,6 +11100,13 @@ The [`SimklTrendingClient`](#simkltrendingclient-sdk) above is the recommended w
 
   ```text theme={"theme":{"light":"github-light","dark":"vesper"}}
   https://data.simkl.in/discover/dvd/releases_<size>.json
+  ```
+
+  **Genre files** are this month only, with a list per type — see [By genre](#by-genre-this-month):
+
+  ```text theme={"theme":{"light":"github-light","dark":"vesper"}}
+  https://data.simkl.in/discover/trending/<category>/genre/index.json
+  https://data.simkl.in/discover/trending/<category>/genre/<slug>_month_500.json
   ```
 
   ### Fetch it
@@ -11557,6 +11677,25 @@ What's new across the Simkl API and these docs.
 For broader Simkl product news — apps, features, releases — follow [**@Simkl**](https://twitter.com/Simkl) on X.
 
 Use the **filter** in the right rail to narrow this changelog by tag.
+
+<Update label="2026-10-07" description="Trending by genre, and genres fixed in trending, DVD, calendar and list data">
+  <Badge icon="sparkles">New feature</Badge>
+
+  **Trending by genre**
+
+  This month's most watched titles for every genre, on the same CDN and under the same rules as the other [trending files](/api-reference/trending) — public, no user token, required parameters and `User-Agent`, attribution:
+
+  * `https://data.simkl.in/discover/trending/{type}/genre/index.json` — the genres for `movies`, `tv` or `anime`, each with its `name`, `slug` and item `count`.
+  * `https://data.simkl.in/discover/trending/{type}/genre/{slug}_month_500.json` — one genre's ranking, up to 500 titles.
+
+  Read the slugs from `index.json` rather than hardcoding them. A genre file is its own ranking, not a slice of `month_500.json`, so it reaches titles the main file never shows. See [By genre (this month)](/api-reference/trending#by-genre-this-month).
+
+  <Badge icon="bug">Fix</Badge>
+
+  **`genres` lists only the title's own type**
+
+  In the [trending](/api-reference/trending), DVD and [calendar](/api-reference/calendar) files and [`GET /lists/{id}`](/api-reference/simkl/get-list), the `genres` array now lists only genres of the title's own type. Before, some titles carried genres from another type: a false "Action" on 43 non-action movies in the month list, and repeats such as "Action, Action" or "Comedy, Comedy". Anime titles no longer show "Animation".
+</Update>
 
 <Update label="2026-10-03" description="Episode runtimes, similar titles, list collections and roles, audience counts">
   <Badge icon="sparkles">New feature</Badge>
@@ -19854,7 +19993,7 @@ The response is byte-for-byte what a genuine quota hit returns — same body, sa
 **The correct pattern for uncached endpoints:** one in-flight request at a time per token; batch into one call instead of N parallel calls whenever the endpoint accepts arrays (every write endpoint does — see *Batch writes* below); gate polling behind [`/sync/activities`](/api-reference/simkl/get-activities) so most `/sync/all-items` calls never happen.
 
 <Note>
-  **Cache invalidation on the cached endpoints is automatic.** When Simkl updates the underlying record (admin edits, metadata refresh, image swap, new episode airing, etc.), the corresponding Cloudflare cache entry is purged server-side. The next call returns fresh data — no TTL to wait out, no `?nocache=…` trick needed. Same applies to the trending and calendar JSON files. Your own app-level cache, if you have one, still has to be invalidated by your client.
+  **Cache invalidation on the cached endpoints is automatic.** When Simkl updates the underlying record (admin edits, metadata refresh, image swap, new episode airing, etc.), the corresponding Cloudflare cache entry is purged server-side. The next call returns fresh data — no TTL to wait out, no `?nocache=…` trick needed. The [calendar](/api-reference/calendar) JSON files work the same way: they are cleared each time they are regenerated. The [trending](/api-reference/trending), DVD and genre files are not — Cloudflare keeps each one for up to an hour, so a regenerated file can take that long to appear. Your own app-level cache, if you have one, still has to be invalidated by your client.
 </Note>
 
 ## Best practices
