@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, test } from 'bun:test';
-import { SimklClient } from '../src/api/client';
+import { SimklApiError, SimklClient } from '../src/api/client';
 import { toolsWhitelist } from '../src/tools-config';
 
 describe('SimklClient request policy', () => {
@@ -60,6 +60,29 @@ describe('SimklClient request policy', () => {
     await client.request('/movies/42', { method: 'GET', token: 'user-token', authorization: 'none' });
     expect(new Headers(requests[0].init.headers).has('Authorization')).toBe(false);
   });
+
+  test('preserves quota headers on upstream errors', async () => {
+    globalThis.fetch = (async () => new Response('{"error":"user_limit_exceeded"}', {
+      status: 429,
+      headers: { 'X-RateLimit-Limit': '10000', 'X-RateLimit-Remaining': '0', 'Retry-After': '3600' },
+    })) as typeof fetch;
+    const client = new SimklClient({ baseUrl: 'https://api.simkl.com', clientId: 'app-id' });
+    try {
+      await client.request('/sync/all-items/shows/watching', { method: 'GET', token: 'access-token' });
+      throw new Error('expected request to fail');
+    } catch (error) {
+      expect(error).toBeInstanceOf(SimklApiError);
+      expect((error as SimklApiError).headers).toEqual({
+        rateLimitLimit: '10000', rateLimitRemaining: '0', retryAfter: '3600',
+      });
+    }
+  });
+
+  test('keeps the streamed response reader bounded at two mebibytes', async () => {
+    globalThis.fetch = (async () => new Response('x'.repeat(2 * 1024 * 1024 + 1))) as typeof fetch;
+    const client = new SimklClient({ baseUrl: 'https://api.simkl.com', clientId: 'app-id' });
+    await expect(client.request('/large', { method: 'GET' })).rejects.toThrow('response too large');
+  });
 });
 
 describe('generated tool request policy configuration', () => {
@@ -88,6 +111,24 @@ describe('generated tool request policy configuration', () => {
       expect(tool?.method).toBe('get');
       expect(tool?.authorization).toBe('none');
       expect(tool?.requestPath?.helper).toBe('simklTrendingPath');
+    }
+  });
+
+  test('registers the public genre tool and explains live genre quota behavior', () => {
+    const publicGenreTool = toolsWhitelist.find(tool => tool.custom?.name === 'simkl_get_trending_by_genre');
+    expect(publicGenreTool?.custom?.schema).toContain("z.enum(['tv', 'movies', 'anime'])");
+    expect(publicGenreTool?.description).toContain('updated daily');
+    expect(publicGenreTool?.description).toContain('no user token');
+
+    for (const path of ['/tv/genres/:genre/:type/:country/:network/:year/:sort', '/anime/genres/:genre/:type/:network/:year/:sort', '/movies/genres/:genre/:type/:country/:year/:sort']) {
+      const liveTool = toolsWhitelist.find(tool => tool.path === path);
+      expect(liveTool?.description).toContain('user’s daily allowance');
+      expect(liveTool?.extraQueryParams).toEqual(['page', 'limit']);
+      expect(liveTool?.responseFormat?.type).toBe('simple');
+      if (liveTool?.responseFormat?.type === 'simple') {
+        expect(liveTool.responseFormat.template(null, {})).toEqual(['no results for this genre']);
+        expect(liveTool.authorization).not.toBe('none');
+      }
     }
   });
 });
