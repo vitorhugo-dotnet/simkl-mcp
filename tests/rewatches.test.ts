@@ -49,6 +49,13 @@ describe('RewatchService', () => {
     expect(response).toHaveProperty('added.statuses.0.response.rewatch_id', 42);
   });
 
+  test('serializes anime history in the anime collection', async () => {
+    const service = createService();
+    await service.start({ mediaType: 'anime', ids: { mal: 4246 }, seasons: [{ number: 1 }] });
+    const body = JSON.parse(String(requests.find(request => request.url.pathname === '/sync/history')!.init.body));
+    expect(body.anime[0]).toEqual({ ids: { mal: 4246 }, seasons: [{ number: 1 }], is_rewatch: true });
+  });
+
   test('pins the session ID for updates and refuses completed shows', async () => {
     const service = createService();
     await expect(service.update({ mediaType: 'shows', ids: { simkl: 5 }, rewatch_id: 42, rewatch_status: 'active', watched_at: '2026-01-02T00:00:00Z', seasons: [{ number: 1, episodes: [{ number: 2, watched_at: '2026-01-02T00:00:00Z' }] }] })).resolves.toBeDefined();
@@ -108,6 +115,23 @@ describe('RewatchService', () => {
     accountType = 'free';
     await expect(service.start({ mediaType: 'movies', ids: { simkl: 2 } })).rejects.toBeInstanceOf(RewatchPlanError);
     expect(requests.filter(request => request.url.pathname === '/users/settings')).toHaveLength(3);
+  });
+
+  test('fails closed for missing credentials, unknown plan type and settings errors', async () => {
+    const service = createService();
+    token = undefined as unknown as string;
+    await expect(service.start({ mediaType: 'movies', ids: { simkl: 1 } })).rejects.toBeInstanceOf(RewatchPlanError);
+    expect(requests).toHaveLength(0);
+
+    token = 'token-a';
+    accountType = undefined;
+    await expect(service.start({ mediaType: 'movies', ids: { simkl: 1 } })).rejects.toBeInstanceOf(RewatchPlanError);
+    expect(requests.filter(request => request.url.pathname === '/sync/history')).toHaveLength(0);
+
+    const failingService = createService();
+    globalThis.fetch = (async () => { throw new Error('settings unavailable'); }) as typeof fetch;
+    await expect(failingService.start({ mediaType: 'movies', ids: { simkl: 1 } })).rejects.toThrow('simkl api request failed');
+    expect(requests.filter(request => request.url.pathname === '/sync/history')).toHaveLength(0);
   });
 
   test('does not request plan eligibility for a normal stop and only opts in on explicit qualifying stops', async () => {
