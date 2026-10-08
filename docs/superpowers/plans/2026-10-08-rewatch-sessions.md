@@ -48,11 +48,11 @@
 - [x] Test read omission of date_from requires initial_sync=true; normal reads require date_from.
 - [x] Test default stop sends no rewatch query/settings request; explicit stop below 80 rejects before writing; explicit stop at 80+ invokes gating and preserves raw JSON. Start/pause remain unchanged and cannot opt in.
 - [x] Implement strict schemas and register tools once per agent. Modify generation inputs rather than editing generated output. Mutation annotations are not readOnly/idempotent.
-- [x] Regenerate with `bun run scripts/codegen.ts`; run focused tests and typecheck; commit.
+- [x] Regenerate with `bun run scripts/codegen.ts`; run focused tests and typecheck; commit. Current `main` also contributes an existing tool, so generation reports 27 tools; the duplicate stop tool remains excluded.
 
 ### Task 4: Documentation, verification and PR
 **Files:** update README.md and planning checklist.
 **Interfaces:** produces the final feature branch and PR containing Closes #10.
 - [x] Document tool behavior, explicit opt-in, plan gating, canonical/session distinction, full-detail read flags, two-day gap, fifty-session limit and retry reconciliation.
-- [x] Run all tests, typecheck, generation and `git diff --check`. Focused rewatch tests pass (12/12); typecheck and generation pass. Full suite has 40 passing and 6 pre-existing AUTH V2/OAuth failures, reproduced from baseline. Inspect the complete diff before PR.
+- [x] Run all tests, typecheck, generation and `git diff --check`. Focused rewatch tests pass (12/12); typecheck and generation pass. After rebasing on current `main`, the full suite passes (77/77 across 10 files). Inspect the complete diff before PR.
 - [ ] Commit final changes, push the feature branch and create a PR with concise behavior/validation notes and Closes #10. Do not merge or deploy.
