@@ -3,6 +3,15 @@ import { getTrendingByGenre, simklTrendingPath } from '../src/api/trending';
 
 describe('simklTrendingPath', () => {
   test.each([
+    ['tv', 'today', 'tv/today_100.json'],
+    ['movies', 'today', 'movies/today_100.json'],
+    ['anime', 'today', 'anime/today_100.json'],
+    ['tv', 'week', 'tv/week_100.json'],
+    ['movies', 'week', 'movies/week_100.json'],
+    ['anime', 'week', 'anime/week_100.json'],
+    ['tv', 'month', 'tv/month_100.json'],
+    ['movies', 'month', 'movies/month_100.json'],
+    ['anime', 'month', 'anime/month_100.json'],
     ['tv', 'daily', 'tv/today_100.json'],
     ['movies', 'daily', 'movies/today_100.json'],
     ['anime', 'daily', 'anime/today_100.json'],
