@@ -3,6 +3,7 @@ import { SimklClient } from '../src/api/client';
 import { RewatchService } from '../src/api/rewatches';
 import { registerRewatchTools } from '../src/tools/rewatches';
 import { toolsWhitelist } from '../src/tools-config';
+import { SimklApiError } from '../src/api/client';
 
 describe('rewatch MCP tools', () => {
   test('registers explicit rewatch operations and owns the stop tool registration', async () => {
@@ -24,6 +25,8 @@ describe('rewatch MCP tools', () => {
       expect(registered.has('simkl_update_rewatch')).toBe(true);
       expect(registered.has('simkl_get_rewatches')).toBe(true);
       expect(registered.get('simkl_start_rewatch')!.definition.inputSchema.ids.safeParse({}).success).toBe(false);
+      expect(registered.get('simkl_start_rewatch')!.definition.inputSchema.ids.safeParse({ unsupported: 'anything' }).success).toBe(false);
+      expect(registered.get('simkl_start_rewatch')!.definition.inputSchema.ids.safeParse({ simkl: 1.5 }).success).toBe(false);
       expect(registered.get('simkl_update_rewatch')!.definition.inputSchema.rewatch_id.safeParse(0).success).toBe(false);
       expect(toolsWhitelist.find(config => config.path === '/scrobble/stop')?.omitFromGenerated).toBe(true);
 
@@ -33,5 +36,17 @@ describe('rewatch MCP tools', () => {
     } finally {
       globalThis.fetch = originalFetch;
     }
+  });
+
+  test('preserves shared AUTH V2 daily-limit guidance for stop errors', async () => {
+    const client = new SimklClient({ baseUrl: 'https://api.simkl.com', clientId: 'app' });
+    client.request = async () => { throw new SimklApiError('429 Too Many Requests', 429, '{"error":"user_limit_exceeded"}', { retryAfter: '3600' }); };
+    const registered = new Map<string, (args: any) => Promise<any>>();
+    const mockServer = { registerTool(name: string, _definition: any, handler: (args: any) => Promise<any>) { registered.set(name, handler); } };
+    registerRewatchTools(mockServer as any, new RewatchService(client, () => 'token'));
+    const response = await registered.get('simkl_stop_watching')!({ body: {} });
+    expect(response.isError).toBe(true);
+    expect(response.content[0].text).toContain('AUTH V2 daily allowance');
+    expect(response.content[0].text).toContain('Retry-After: 3600 seconds');
   });
 });

@@ -52,12 +52,12 @@ export class RewatchService {
       throw new Error('rewatch_status completed can only be set for movies');
     }
     const item = this.toItem(input);
-    await this.requireEligiblePlan();
+    const token = await this.requireEligiblePlan();
     item.is_rewatch = true;
     if (input.rewatch_id !== undefined) item.rewatch_id = input.rewatch_id;
     if (input.rewatch_status) item.rewatch_status = input.rewatch_status;
     return this.client.request('/sync/history', {
-      method: 'POST', token: this.getToken(), query: { allow_rewatch: 'yes' },
+      method: 'POST', token, query: { allow_rewatch: 'yes' },
       body: { [mediaKeys[input.mediaType]]: [item] },
     });
   }
@@ -68,11 +68,11 @@ export class RewatchService {
       throw new Error('rewatch_status completed can only be set for movies');
     }
     const item = this.toItem(input);
-    await this.requireEligiblePlan();
+    const token = await this.requireEligiblePlan();
     item.rewatch_id = input.rewatch_id;
     if (input.rewatch_status) item.rewatch_status = input.rewatch_status;
     return this.client.request('/sync/history', {
-      method: 'POST', token: this.getToken(), query: { allow_rewatch: 'yes' },
+      method: 'POST', token, query: { allow_rewatch: 'yes' },
       body: { [mediaKeys[input.mediaType]]: [item] },
     });
   }
@@ -98,10 +98,10 @@ export class RewatchService {
       if (typeof progress !== 'number' || progress < 80) {
         throw new Error('rewatch opt-in on scrobble stop requires progress of at least 80');
       }
-      await this.requireEligiblePlan();
     }
+    const token = useRewatch ? await this.requireEligiblePlan() : this.getToken();
     const result = await this.client.request<any>('/scrobble/stop', {
-      method: 'POST', token: this.getToken(),
+      method: 'POST', token,
       ...(useRewatch ? { query: { allow_rewatch: 'yes' } } : {}),
       body: input.body,
     });
@@ -109,7 +109,7 @@ export class RewatchService {
     return result;
   }
 
-  private async requireEligiblePlan(): Promise<void> {
+  private async requireEligiblePlan(): Promise<string> {
     const token = this.getToken();
     if (!token) throw new RewatchPlanError('a Simkl account token is required for rewatch tracking');
     for (const [cachedToken, value] of this.eligibility) {
@@ -117,13 +117,18 @@ export class RewatchService {
     }
     const cached = this.eligibility.get(token);
     if (cached && cached.expiresAt > this.now()) {
-      if (cached.allowed) return;
+      if (cached.allowed) {
+        if (this.getToken() !== token) throw new RewatchPlanError('Simkl account token changed during rewatch authorization; retry the operation');
+        return token;
+      }
       throw new RewatchPlanError('rewatch tracking requires a Simkl PRO or VIP account');
     }
     const settings = await this.client.request<any>('/users/settings', { method: 'GET', token });
+    if (this.getToken() !== token) throw new RewatchPlanError('Simkl account token changed during rewatch authorization; retry the operation');
     const allowed = ['pro', 'vip'].includes(String(settings?.account?.type ?? '').toLowerCase());
     this.eligibility.set(token, { allowed, expiresAt: this.now() + CACHE_TTL_MS });
     if (!allowed) throw new RewatchPlanError('rewatch tracking requires a Simkl PRO or VIP account');
+    return token;
   }
 
   private clearEligibility(): void {
@@ -132,11 +137,12 @@ export class RewatchService {
   }
 
   private toItem(input: RewatchItemInput): RewatchItem {
-    if (!input.ids || Object.keys(input.ids).length === 0 || !Object.values(input.ids).some(value =>
-      typeof value === 'number' ? Number.isFinite(value) && value > 0 : typeof value === 'string' && value.trim().length > 0,
-    )) {
-      throw new Error('at least one media identifier is required');
-    }
+    const supportedKeys = new Set(['simkl', 'imdb', 'tmdb', 'tvdb', 'mal', 'anilist']);
+    const validIds = input.ids && Object.entries(input.ids).some(([key, value]) => supportedKeys.has(key) && (
+      typeof value === 'number' ? Number.isInteger(value) && value > 0
+        : typeof value === 'string' && value.trim().length > 0
+    ));
+    if (!validIds) throw new Error('at least one valid media identifier is required');
     if (input.watched_at && !Number.isFinite(Date.parse(input.watched_at))) throw new Error('watched_at must be a valid date');
     return {
       ids: input.ids,

@@ -117,6 +117,38 @@ describe('RewatchService', () => {
     expect(requests.filter(request => request.url.pathname === '/users/settings')).toHaveLength(3);
   });
 
+  test('rejects a token change while checking eligibility before every gated write', async () => {
+    for (const operation of ['start', 'update', 'stop'] as const) {
+      requests = [];
+      token = 'token-a';
+      let resolveSettings!: (response: Response) => void;
+      globalThis.fetch = (async (input: RequestInfo | URL) => {
+        const url = new URL(String(input));
+        requests.push({ url, init: {} });
+        if (url.pathname === '/users/settings') return new Promise<Response>(resolve => { resolveSettings = resolve; });
+        return Response.json({});
+      }) as typeof fetch;
+      const service = createService();
+      const pending = operation === 'start'
+        ? service.start({ mediaType: 'movies', ids: { simkl: 1 } })
+        : operation === 'update'
+          ? service.update({ mediaType: 'movies', ids: { simkl: 1 }, rewatch_id: 1 })
+          : service.stop({ body: { progress: 80 }, allow_rewatch: true });
+      await Promise.resolve();
+      token = 'token-b';
+      resolveSettings(Response.json({ account: { type: 'pro' } }));
+      await expect(pending).rejects.toThrow(/token changed/);
+      expect(requests.some(request => request.url.pathname === '/sync/history' || request.url.pathname === '/scrobble/stop')).toBe(false);
+    }
+  });
+
+  test('rejects unknown identifier keys and malformed Simkl numeric IDs before network access', async () => {
+    const service = createService();
+    await expect(service.start({ mediaType: 'movies', ids: { unsupported: 'anything' } })).rejects.toThrow(/valid media identifier/);
+    await expect(service.start({ mediaType: 'movies', ids: { simkl: 1.5 } })).rejects.toThrow(/valid media identifier/);
+    expect(requests).toHaveLength(0);
+  });
+
   test('fails closed for missing credentials, unknown plan type and settings errors', async () => {
     const service = createService();
     token = undefined as unknown as string;

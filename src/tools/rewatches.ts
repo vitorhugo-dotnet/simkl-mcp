@@ -1,12 +1,16 @@
 import { z } from 'zod';
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { RewatchService, type RewatchMediaType, type RewatchWriteMediaType, type RewatchStatus } from '../api/rewatches.js';
+import { toMcpErrorResult } from '../api/errors.js';
 
 const mediaType = z.enum(['movies', 'shows', 'anime']);
 const listMediaType = z.enum(['all', 'movies', 'shows', 'anime']);
 const ids = z.record(z.string(), z.union([z.string(), z.number()])).refine(
-  value => Object.values(value).some(item => typeof item === 'number' ? Number.isFinite(item) && item > 0 : item.trim().length > 0),
-  'at least one media identifier is required',
+  value => Object.entries(value).some(([key, item]) => ['simkl', 'imdb', 'tmdb', 'tvdb', 'mal', 'anilist'].includes(key) && (
+    typeof item === 'number' ? Number.isInteger(item) && item > 0
+      : typeof item === 'string' && item.trim().length > 0
+  )),
+  'at least one valid media identifier is required',
 );
 const episode = z.object({ number: z.number().int().positive(), watched_at: z.string().datetime().optional() }).passthrough();
 const season = z.object({ number: z.number().int().nonnegative(), episodes: z.array(episode).optional() }).passthrough();
@@ -14,10 +18,6 @@ const date = z.string().datetime();
 
 function jsonResult(value: unknown) {
   return { content: [{ type: 'text' as const, text: JSON.stringify(value, null, 2) }] };
-}
-
-function errorResult(error: unknown) {
-  return { content: [{ type: 'text' as const, text: error instanceof Error ? error.message : 'Simkl request failed' }], isError: true };
 }
 
 export function registerRewatchTools(server: McpServer, service: RewatchService): void {
@@ -42,7 +42,7 @@ export function registerRewatchTools(server: McpServer, service: RewatchService)
         ...(args.watched_at ? { watched_at: args.watched_at } : {}),
         ...(args.seasons ? { seasons: args.seasons } : {}),
       }));
-    } catch (error) { return errorResult(error); }
+    } catch (error) { return toMcpErrorResult(error); }
   });
 
   server.registerTool('simkl_update_rewatch', {
@@ -66,7 +66,7 @@ export function registerRewatchTools(server: McpServer, service: RewatchService)
         ...(args.watched_at ? { watched_at: args.watched_at } : {}),
         ...(args.seasons ? { seasons: args.seasons } : {}),
       }));
-    } catch (error) { return errorResult(error); }
+    } catch (error) { return toMcpErrorResult(error); }
   });
 
   server.registerTool('simkl_get_rewatches', {
@@ -86,7 +86,7 @@ export function registerRewatchTools(server: McpServer, service: RewatchService)
         ...(args.date_from ? { date_from: args.date_from } : {}),
         ...(args.initial_sync ? { initial_sync: true } : {}),
       }));
-    } catch (error) { return errorResult(error); }
+    } catch (error) { return toMcpErrorResult(error); }
   });
 
   server.registerTool('simkl_stop_watching', {
@@ -99,6 +99,6 @@ export function registerRewatchTools(server: McpServer, service: RewatchService)
   }, async args => {
     try {
       return jsonResult(await service.stop({ body: args.body, allow_rewatch: args.allow_rewatch }));
-    } catch (error) { return errorResult(error); }
+    } catch (error) { return toMcpErrorResult(error); }
   });
 }
