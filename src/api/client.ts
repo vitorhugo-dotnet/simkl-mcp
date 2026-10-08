@@ -145,7 +145,13 @@ export class SimklClient {
       return { data: { redirectUrl: location } as T, pagination: null, headers: responseHeaders };
     }
 
-    const responseText = await this.readResponseBody(response);
+    let responseText: string;
+    try {
+      responseText = await this.readResponseBody(response);
+    } catch (error) {
+      if (error instanceof SimklApiError) throw error;
+      throw new SimklApiError('simkl api error: response body read failed', response.status, null, responseHeaders);
+    }
 
     if (!response.ok) {
       throw new SimklApiError(

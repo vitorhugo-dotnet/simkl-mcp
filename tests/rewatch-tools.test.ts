@@ -70,5 +70,22 @@ describe('rewatch MCP tools', () => {
     client.request = async () => { throw new SimklApiError('simkl api error: invalid json response', 201, '<truncated>'); };
     const unreadable = await registered.get('simkl_start_rewatch')!({ mediaType: 'movies', ids: { simkl: 5 } });
     expect(unreadable.content[0].text).toContain('may have succeeded');
+
+    const originalFetch = globalThis.fetch;
+    let postCount = 0;
+    client.request = SimklClient.prototype.request.bind(client) as typeof client.request;
+    globalThis.fetch = (async (input: RequestInfo | URL, init?: RequestInit) => {
+      const url = new URL(String(input));
+      if (url.pathname === '/users/settings') return Response.json({ account: { type: 'pro' } });
+      if (init?.method === 'POST') postCount++;
+      return new Response(new ReadableStream({ start(controller) { controller.error(new Error('terminated')); } }), { status: 201 });
+    }) as typeof fetch;
+    try {
+      const streamFailure = await registered.get('simkl_start_rewatch')!({ mediaType: 'movies', ids: { simkl: 6 } });
+      expect(postCount).toBe(1);
+      expect(streamFailure.content[0].text).toContain('may have succeeded');
+    } finally {
+      globalThis.fetch = originalFetch;
+    }
   });
 });
