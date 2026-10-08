@@ -13,9 +13,33 @@ interface ToolConfig {
   name?: string;
   responseFormat?: ResponseFormat;
   omitParams?: string[];
+  description?: string;
+  extraQueryParams?: string[];
+  custom?: {
+    name: string;
+    schema: string;
+    handler: string;
+  };
 }
 
 export const toolsWhitelist: ToolConfig[] = [
+  {
+    path: '/discover/trending/:type/genre/:genre',
+    method: 'get',
+    description: 'Get monthly trending titles for one genre from Simkl’s public CDN. Rankings are updated daily, contain up to 500 titles, and have no upstream pagination. The CDN request needs no user token and uses no Simkl daily quota or per-second rate. Supply an exact genre slug from the selected media type’s genre index; returns up to maxResults rich items without fetching details per title.',
+    custom: {
+      name: 'simkl_get_trending_by_genre',
+      schema: "z.object({ type: z.enum(['tv', 'movies', 'anime']), genre: z.string().min(1).max(100), maxResults: z.number().int().min(1).max(100).optional() })",
+      handler: `async (args: any) => {
+        try {
+          const result = await getTrendingByGenre(client, args.type, args.genre, args.maxResults);
+          return { content: [{ type: 'text', text: JSON.stringify(result, null, 2) }] };
+        } catch (error) {
+          return toMcpErrorResult(error);
+        }
+      }`,
+    },
+  },
   // search
   { path: '/search/:type', method: 'get', responseFormat: {
     type: 'simple',
@@ -93,17 +117,17 @@ export const toolsWhitelist: ToolConfig[] = [
   }},
 
   // genre filtering
-  { path: '/tv/genres/:genre/:type/:country/:network/:year/:sort', method: 'get', responseFormat: {
+  { path: '/tv/genres/:genre/:type/:country/:network/:year/:sort', method: 'get', extraQueryParams: ['page', 'limit'], description: 'Live TV genre browsing supports other sorts and country, network, and year filters. Under AUTH V2 it requires the user access token and consumes the user’s daily allowance; live requests also count toward the per-second limit. Pagination is capped at page 20 and 60 items per page. Prefer simkl_get_trending_by_genre for this month’s most watched titles in one genre (daily-updated CDN file, no token or upstream quota).', responseFormat: {
     type: 'simple',
-    template: (results: any) => formatList(results)
+    template: (results: any) => Array.isArray(results) ? formatList(results) : ['no results for this genre']
   }},
-  { path: '/anime/genres/:genre/:type/:network/:year/:sort', method: 'get', responseFormat: {
+  { path: '/anime/genres/:genre/:type/:network/:year/:sort', method: 'get', extraQueryParams: ['page', 'limit'], description: 'Live anime genre browsing supports other sorts and network and year filters. Under AUTH V2 it requires the user access token and consumes the user’s daily allowance; live requests also count toward the per-second limit. Pagination is capped at page 20 and 60 items per page. Prefer simkl_get_trending_by_genre for this month’s most watched titles in one genre (daily-updated CDN file, no token or upstream quota).', responseFormat: {
     type: 'simple',
-    template: (results: any) => formatList(results)
+    template: (results: any) => Array.isArray(results) ? formatList(results) : ['no results for this genre']
   }},
-  { path: '/movies/genres/:genre/:type/:country/:year/:sort', method: 'get', responseFormat: {
+  { path: '/movies/genres/:genre/:type/:country/:year/:sort', method: 'get', extraQueryParams: ['page', 'limit'], description: 'Live movie genre browsing supports other sorts and country and year filters. Under AUTH V2 it requires the user access token and consumes the user’s daily allowance; live requests also count toward the per-second limit. Pagination is capped at page 20 and 60 items per page. Prefer simkl_get_trending_by_genre for this month’s most watched titles in one genre (daily-updated CDN file, no token or upstream quota).', responseFormat: {
     type: 'simple',
-    template: (results: any) => formatList(results)
+    template: (results: any) => Array.isArray(results) ? formatList(results) : ['no results for this genre']
   }},
 
   // user stats

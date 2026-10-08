@@ -48,17 +48,26 @@ bun run deploy:production # optional
 Configure remote MCP clients to use `https://your-worker.workers.dev/mcp` with Streamable HTTP (Claude: Settings → Connectors → Add Server). Use `https://your-worker.workers.dev/sse` only for clients that still require the legacy SSE transport.
 
 ## Tools
-- **Search**: `simkl_search`, `simkl_search_id`
-- **Scrobble**: `simkl_scrobble_start`, `simkl_scrobble_pause`, `simkl_scrobble_stop`
-- **Sync/Tracking**: `simkl_sync_add_to_list`, `simkl_sync_history`, `simkl_sync_history_remove`, `simkl_sync_ratings`, `simkl_sync_ratings_remove`
-- **Discovery**: trending/best/details/episodes/genres for tv, movies, anime (13 tools)
-- **User**: `simkl_users_stats`, plus custom `simkl_my_stats`
+- **Search**: `simkl_search_by_text`, `simkl_search_by_id`
+- **Scrobble**: `simkl_start_watching`, `simkl_pause_watching`, `simkl_stop_watching`
+- **Sync/tracking**: `simkl_add_to_watchlist`, `simkl_mark_watched`, `simkl_remove_from_history`, `simkl_add_rating`, `simkl_get_watchlist`
+- **Discovery**: `simkl_get_trending_by_genre`, `simkl_get_trending_shows`, `simkl_get_trending_movies`, `simkl_get_trending_anime`, `simkl_get_best_shows`, `simkl_get_best_anime`, `simkl_get_show_by_id`, `simkl_get_movie_by_id`, `simkl_get_anime_by_id`, `simkl_get_show_episodes`, `simkl_get_anime_episodes`, `simkl_get_shows_by_genre`, `simkl_get_movies_by_genre`, `simkl_get_anime_by_genre`, `simkl_get_airing_shows`, `simkl_get_airing_anime`
+- **User**: `simkl_get_user_stats`, `simkl_my_stats`
 - **Resources**: `watchlist/{type}/{status}`, `trending/{type}/{interval}`
+
+### Genre discovery
+
+Use `simkl_get_trending_by_genre` for this month’s most watched titles in a genre. It resolves genre slugs from the selected media type’s CDN index and reads the matching `month_500` file. These files contain up to 500 rich title records, are updated daily, and do not support upstream pagination. The tool returns a bounded number of those records and their rich fields without making separate detail requests.
+
+The genre CDN requests include the required app identification and omit `Authorization`. Simkl documents these public data files as requiring no user token and consuming neither daily quota nor per-second limits. The tool covers monthly most-watched rankings only.
+
+Keep the live `simkl_get_shows_by_genre`, `simkl_get_movies_by_genre`, and `simkl_get_anime_by_genre` tools for other sorts and filters such as country, network, year, and type, and for queries the monthly files do not cover. Under AUTH V2, live genre requests require the user's access token and consume that user's shared daily allowance; under AUTH V1 they consume the app's daily allowance. Live requests also count toward the applicable per-second limit (10 GET requests per second). Live pagination caps are 20 pages and 60 items per page.
 
 ## Authentication
 - Public requests add `client_id` as a query param; authenticated calls use `Authorization: Bearer <token>`.
 - The Worker handles OAuth: `/auth/simkl` redirects to Simkl, `/oauth/callback` exchanges the code and issues MCP credentials.
-- Tokens are long-lived; for local dev, secrets live in `.dev.vars`, for production use Wrangler secrets and KV (`OAUTH_KV`) for state.
+- Token-free upstream CDN calls do not make this server's `/mcp` or `/sse` endpoints anonymous. MCP clients still authenticate through the Worker OAuth flow.
+- AUTH V2 access tokens last 7 days. Refresh tokens last 180 days on a sliding lifetime that renews when used; Simkl returns the same refresh token on refresh. The Worker refreshes access tokens as needed. For local dev, secrets live in `.dev.vars`; production uses Wrangler secrets and KV (`OAUTH_KV`) for state.
 
 ## Development
 ```bash
