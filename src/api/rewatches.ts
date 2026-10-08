@@ -36,6 +36,16 @@ export class RewatchPlanError extends Error {
 
 const CACHE_TTL_MS = 5 * 60 * 1000;
 const mediaKeys: Record<RewatchWriteMediaType, string> = { movies: 'movies', shows: 'shows', anime: 'anime' };
+const numericIdKeys = new Set(['simkl', 'hulu', 'netflix', 'mal', 'tvdb', 'tmdb', 'anidb', 'crunchyroll', 'anilist', 'kitsu', 'livechart', 'anisearch']);
+const stringIdKeys = new Set(['imdb', 'animeplanet', 'traktslug', 'letterboxd']);
+
+export function hasValidMediaIds(ids: Record<string, string | number> | undefined): boolean {
+  return !!ids && Object.entries(ids).some(([key, value]) => {
+    if (numericIdKeys.has(key)) return typeof value === 'number' && Number.isInteger(value) && value > 0;
+    if (key === 'imdb') return typeof value === 'string' && (/^tt\d+$/.test(value) || /^https?:\/\/www\.imdb\.com\/title\/tt\d+\/?$/.test(value));
+    return stringIdKeys.has(key) && typeof value === 'string' && value.trim().length > 0;
+  });
+}
 
 export class RewatchService {
   private eligibility = new Map<string, { allowed: boolean; expiresAt: number }>();
@@ -105,7 +115,7 @@ export class RewatchService {
       ...(useRewatch ? { query: { allow_rewatch: 'yes' } } : {}),
       body: input.body,
     });
-    if (useRewatch && hasProRequiredStatus(result)) this.clearEligibility();
+    if (useRewatch && hasProRequiredStatus(result)) this.clearEligibility(token);
     return result;
   }
 
@@ -131,18 +141,12 @@ export class RewatchService {
     return token;
   }
 
-  private clearEligibility(): void {
-    const token = this.getToken();
+  private clearEligibility(token: string | undefined): void {
     if (token) this.eligibility.delete(token);
   }
 
   private toItem(input: RewatchItemInput): RewatchItem {
-    const supportedKeys = new Set(['simkl', 'imdb', 'tmdb', 'tvdb', 'mal', 'anilist']);
-    const validIds = input.ids && Object.entries(input.ids).some(([key, value]) => supportedKeys.has(key) && (
-      typeof value === 'number' ? Number.isInteger(value) && value > 0
-        : typeof value === 'string' && value.trim().length > 0
-    ));
-    if (!validIds) throw new Error('at least one valid media identifier is required');
+    if (!hasValidMediaIds(input.ids)) throw new Error('at least one valid media identifier is required');
     if (input.watched_at && !Number.isFinite(Date.parse(input.watched_at))) throw new Error('watched_at must be a valid date');
     return {
       ids: input.ids,

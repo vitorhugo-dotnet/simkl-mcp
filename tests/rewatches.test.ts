@@ -142,11 +142,37 @@ describe('RewatchService', () => {
     }
   });
 
+  test('invalidates the cache for the token that received pro_required', async () => {
+    token = 'token-a';
+    let resolveStop!: (response: Response) => void;
+    globalThis.fetch = (async (input: RequestInfo | URL) => {
+      const url = new URL(String(input));
+      requests.push({ url, init: {} });
+      if (url.pathname === '/users/settings') return Response.json({ account: { type: 'pro' } });
+      if (url.pathname === '/scrobble/stop') return new Promise<Response>(resolve => { resolveStop = resolve; });
+      return Response.json({});
+    }) as typeof fetch;
+    const service = createService();
+    const stop = service.stop({ body: { progress: 80 }, allow_rewatch: true });
+    while (!resolveStop) await Promise.resolve();
+    token = 'token-b';
+    await service.start({ mediaType: 'movies', ids: { simkl: 2 } });
+    resolveStop(Response.json({ rewatch_status: 'pro_required' }));
+    await stop;
+    token = 'token-a';
+    await service.start({ mediaType: 'movies', ids: { simkl: 3 } });
+    expect(requests.filter(request => request.url.pathname === '/users/settings')).toHaveLength(3);
+  });
+
   test('rejects unknown identifier keys and malformed Simkl numeric IDs before network access', async () => {
     const service = createService();
     await expect(service.start({ mediaType: 'movies', ids: { unsupported: 'anything' } })).rejects.toThrow(/valid media identifier/);
     await expect(service.start({ mediaType: 'movies', ids: { simkl: 1.5 } })).rejects.toThrow(/valid media identifier/);
+    await expect(service.start({ mediaType: 'anime', ids: { simkl: 'garbage' as any } })).rejects.toThrow(/valid media identifier/);
     expect(requests).toHaveLength(0);
+    await service.start({ mediaType: 'anime', ids: { anidb: 10846 } });
+    await service.start({ mediaType: 'anime', ids: { kitsu: 12 } });
+    expect(requests.filter(request => request.url.pathname === '/sync/history')).toHaveLength(2);
   });
 
   test('fails closed for missing credentials, unknown plan type and settings errors', async () => {

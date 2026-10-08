@@ -49,4 +49,21 @@ describe('rewatch MCP tools', () => {
     expect(response.content[0].text).toContain('AUTH V2 daily allowance');
     expect(response.content[0].text).toContain('Retry-After: 3600 seconds');
   });
+
+  test('preserves local rejection messages and warns before retrying ambiguous writes', async () => {
+    const client = new SimklClient({ baseUrl: 'https://api.simkl.com', clientId: 'app' });
+    const registered = new Map<string, (args: any) => Promise<any>>();
+    const mockServer = { registerTool(name: string, _definition: any, handler: (args: any) => Promise<any>) { registered.set(name, handler); } };
+    const service = new RewatchService(client, () => 'token');
+    registerRewatchTools(mockServer as any, service);
+    const completedShow = await registered.get('simkl_update_rewatch')!({ mediaType: 'shows', ids: { simkl: 2 }, rewatch_id: 1, rewatch_status: 'completed' });
+    expect(completedShow.content[0].text).toContain('can only be set for movies');
+    client.request = async (endpoint: string) => {
+      if (endpoint === '/users/settings') return { account: { type: 'pro' } } as any;
+      throw new SimklApiError('simkl api request failed', 0, null);
+    };
+    const uncertain = await registered.get('simkl_start_rewatch')!({ mediaType: 'movies', ids: { simkl: 4 } });
+    expect(uncertain.content[0].text).toContain('may have succeeded');
+    expect(uncertain.content[0].text).toContain('before retrying');
+  });
 });
