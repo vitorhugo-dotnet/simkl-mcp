@@ -170,9 +170,10 @@ describe('RewatchService', () => {
     await expect(service.start({ mediaType: 'movies', ids: { simkl: 1.5 } })).rejects.toThrow(/valid media identifier/);
     await expect(service.start({ mediaType: 'anime', ids: { simkl: 'garbage' as any } })).rejects.toThrow(/valid media identifier/);
     expect(requests).toHaveLength(0);
-    await service.start({ mediaType: 'anime', ids: { anidb: 10846 } });
-    await service.start({ mediaType: 'anime', ids: { kitsu: 12 } });
-    expect(requests.filter(request => request.url.pathname === '/sync/history')).toHaveLength(2);
+    await service.start({ mediaType: 'anime', ids: { anidb: '10846' } });
+    await service.start({ mediaType: 'anime', ids: { kitsu: '12' } });
+    await service.start({ mediaType: 'shows', ids: { tvdb: 'the-walking-dead' } });
+    expect(requests.filter(request => request.url.pathname === '/sync/history')).toHaveLength(3);
   });
 
   test('fails closed for missing credentials, unknown plan type and settings errors', async () => {

@@ -19,7 +19,7 @@ function jsonResult(value: unknown) {
 }
 
 function rewatchErrorResult(error: unknown, mutation = false) {
-  if (error instanceof SimklApiError && error.statusCode === 0 && mutation) {
+  if (error instanceof SimklApiError && (error.statusCode === 0 || error.statusCode < 400) && mutation) {
     return { isError: true, content: [{ type: 'text' as const, text: 'The Simkl write may have succeeded despite the connection failure. Read rewatch sessions and history before retrying.' }] };
   }
   if (error instanceof SimklApiError) return toMcpErrorResult(error);
@@ -92,7 +92,7 @@ export function registerRewatchTools(server: McpServer, service: RewatchService)
         ...(args.date_from ? { date_from: args.date_from } : {}),
         ...(args.initial_sync ? { initial_sync: true } : {}),
       }));
-    } catch (error) { return toMcpErrorResult(error); }
+    } catch (error) { return rewatchErrorResult(error); }
   });
 
   server.registerTool('simkl_stop_watching', {

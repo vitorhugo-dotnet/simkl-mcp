@@ -41,7 +41,10 @@ const stringIdKeys = new Set(['imdb', 'animeplanet', 'traktslug', 'letterboxd'])
 
 export function hasValidMediaIds(ids: Record<string, string | number> | undefined): boolean {
   return !!ids && Object.entries(ids).some(([key, value]) => {
-    if (numericIdKeys.has(key)) return typeof value === 'number' && Number.isInteger(value) && value > 0;
+    if (key === 'tvdb' && typeof value === 'string' && /^[a-z0-9]+(?:-[a-z0-9]+)*$/i.test(value)) return true;
+    if (numericIdKeys.has(key)) return typeof value === 'number'
+      ? Number.isInteger(value) && value > 0
+      : typeof value === 'string' && /^\d+$/.test(value) && Number(value) > 0;
     if (key === 'imdb') return typeof value === 'string' && (/^tt\d+$/.test(value) || /^https?:\/\/www\.imdb\.com\/title\/tt\d+\/?$/.test(value));
     return stringIdKeys.has(key) && typeof value === 'string' && value.trim().length > 0;
   });

@@ -58,6 +58,8 @@ describe('rewatch MCP tools', () => {
     registerRewatchTools(mockServer as any, service);
     const completedShow = await registered.get('simkl_update_rewatch')!({ mediaType: 'shows', ids: { simkl: 2 }, rewatch_id: 1, rewatch_status: 'completed' });
     expect(completedShow.content[0].text).toContain('can only be set for movies');
+    const missingDate = await registered.get('simkl_get_rewatches')!({ mediaType: 'all', status: 'completed' });
+    expect(missingDate.content[0].text).toContain('date_from is required');
     client.request = async (endpoint: string) => {
       if (endpoint === '/users/settings') return { account: { type: 'pro' } } as any;
       throw new SimklApiError('simkl api request failed', 0, null);
@@ -65,5 +67,8 @@ describe('rewatch MCP tools', () => {
     const uncertain = await registered.get('simkl_start_rewatch')!({ mediaType: 'movies', ids: { simkl: 4 } });
     expect(uncertain.content[0].text).toContain('may have succeeded');
     expect(uncertain.content[0].text).toContain('before retrying');
+    client.request = async () => { throw new SimklApiError('simkl api error: invalid json response', 201, '<truncated>'); };
+    const unreadable = await registered.get('simkl_start_rewatch')!({ mediaType: 'movies', ids: { simkl: 5 } });
+    expect(unreadable.content[0].text).toContain('may have succeeded');
   });
 });
