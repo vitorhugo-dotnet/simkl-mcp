@@ -105,9 +105,21 @@ jobs:
         with:
           name: generated-bindings
           path: generated/
+      - name: Skip stale main revisions
+        id: current
+        run: |
+          latest_sha="$(git ls-remote --exit-code origin refs/heads/main | cut -f1)"
+          if [ "$GITHUB_SHA" = "$latest_sha" ]; then
+            echo "deploy=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "deploy=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::Skipping deployment because main has a newer revision"
+          fi
       - name: Verify Cloudflare credentials are configured
+        if: steps.current.outputs.deploy == 'true'
         run: |
           test -n "$CLOUDFLARE_API_TOKEN" || { echo "::error::Set the CLOUDFLARE_API_TOKEN repository secret"; exit 1; }
           test -n "$CLOUDFLARE_ACCOUNT_ID" || { echo "::error::Set the CLOUDFLARE_ACCOUNT_ID repository secret"; exit 1; }
       - name: Deploy Worker
+        if: steps.current.outputs.deploy == 'true'
         run: bun run deploy

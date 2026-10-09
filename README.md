@@ -57,7 +57,8 @@ Set the repository Actions secrets `CLOUDFLARE_API_TOKEN` (with permission to de
 this Worker and its configured bindings) and `CLOUDFLARE_ACCOUNT_ID`. Existing
 Worker secrets such as `SIMKL_CLIENT_SECRET` remain configured in Cloudflare;
 the workflow does not replace them. Deployments are serialized and are not
-cancelled when another deployment is queued.
+cancelled when another deployment is queued. Within the deployment lock, runs whose
+commit no longer matches `main` skip deployment, including retries of old runs.
 
 ## Tools
 - **Search**: `simkl_search_by_text`, `simkl_search_by_id`
