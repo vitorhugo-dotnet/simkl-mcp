@@ -45,6 +45,20 @@ bun run deploy:production # optional
 ```
 Configure remote MCP clients to use `https://your-worker.workers.dev/mcp` with Streamable HTTP (Claude: Settings → Connectors → Add Server). Use `https://your-worker.workers.dev/sse` only for clients that still require the legacy SSE transport.
 
+### GitHub Actions deployment
+
+The `CI and Deploy` workflow runs separate jobs in order:
+Install → Codegen → Typecheck → Test → Deploy. Generated bindings are uploaded once
+and downloaded by the later jobs. Tests include the Worker RPC/persistence fixture.
+Pull requests run validation; successful pushes to `main` deploy the `simkl-mcp`
+Worker from `wrangler.toml`. A manual run on `main` can retry deployment.
+
+Set the repository Actions secrets `CLOUDFLARE_API_TOKEN` (with permission to deploy
+this Worker and its configured bindings) and `CLOUDFLARE_ACCOUNT_ID`. Existing
+Worker secrets such as `SIMKL_CLIENT_SECRET` remain configured in Cloudflare;
+the workflow does not replace them. Deployments are serialized and are not
+cancelled when another deployment is queued.
+
 ## Tools
 - **Search**: `simkl_search_by_text`, `simkl_search_by_id`
 - **Scrobble**: `simkl_start_watching`, `simkl_pause_watching`, `simkl_stop_watching`

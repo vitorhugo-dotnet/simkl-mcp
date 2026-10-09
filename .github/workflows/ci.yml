@@ -1,12 +1,17 @@
-name: CI
+name: CI and Deploy
 
 on:
   push:
     branches: [main]
   pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
 
 jobs:
-  check:
+  install:
+    name: Install
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -19,9 +24,90 @@ jobs:
 
       - run: bun install --frozen-lockfile
 
+  codegen:
+    name: Codegen
+    needs: install
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: true
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.4.2
+      - run: bun install --frozen-lockfile
+
       # generated/tools.ts is gitignored but required by the typecheck
       - run: bun run codegen
 
+      - name: Upload generated bindings
+        uses: actions/upload-artifact@v4
+        with:
+          name: generated-bindings
+          path: generated/
+          if-no-files-found: error
+          retention-days: 1
+
+  typecheck:
+    name: Typecheck
+    needs: codegen
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.4.2
+      - run: bun install --frozen-lockfile
+      - uses: actions/download-artifact@v4
+        with:
+          name: generated-bindings
+          path: generated/
+
       - run: bun run typecheck
 
-      - run: bun test --pass-with-no-tests
+  test:
+    name: Test
+    needs: [codegen, typecheck]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.4.2
+      - run: bun install --frozen-lockfile
+      - uses: actions/download-artifact@v4
+        with:
+          name: generated-bindings
+          path: generated/
+
+      - run: bun test
+      - name: Test Worker RPC and persistence
+        run: node tests/library-runtime/smoke.mjs
+
+  deploy:
+    name: Deploy to Cloudflare
+    needs: [codegen, typecheck, test]
+    if: github.ref == 'refs/heads/main' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
+    runs-on: ubuntu-latest
+    concurrency:
+      group: cloudflare-deploy-main
+      cancel-in-progress: false
+    env:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.4.2
+      - run: bun install --frozen-lockfile
+      - uses: actions/download-artifact@v4
+        with:
+          name: generated-bindings
+          path: generated/
+      - name: Verify Cloudflare credentials are configured
+        run: |
+          test -n "$CLOUDFLARE_API_TOKEN" || { echo "::error::Set the CLOUDFLARE_API_TOKEN repository secret"; exit 1; }
+          test -n "$CLOUDFLARE_ACCOUNT_ID" || { echo "::error::Set the CLOUDFLARE_ACCOUNT_ID repository secret"; exit 1; }
+      - name: Deploy Worker
+        run: bun run deploy
