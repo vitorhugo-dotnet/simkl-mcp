@@ -77,6 +77,36 @@ Keep the live `simkl_get_shows_by_genre`, `simkl_get_movies_by_genre`, and `simk
 - AUTH V2 access tokens last 7 days. Refresh tokens last 180 days on a sliding lifetime that renews when used; Simkl returns the same refresh token on refresh. The Worker refreshes access tokens as needed. For local dev, secrets live in `.dev.vars`; production uses Wrangler secrets and KV (`OAUTH_KV`) for state.
 
 ## Development
+
+### Library cache foundation
+
+The `SIMKL_LIBRARY_CACHE` SQLite Durable Object stores one canonical library per
+verified Simkl account ID, independently of MCP sessions. New OAuth grants retain
+that ID; legacy sessions resolve it through authenticated `/users/settings` before
+selecting an object. Random provider fallback IDs never select library caches.
+
+`LibraryService` exposes initialization and item reads for future consumers. The
+object coalesces concurrent first reads, fetches activities and then shows, movies,
+and anime sequentially without `extended`, and commits separate item rows and the
+activities snapshot in a synchronous transaction after every pull succeeds. A
+`400 max_items` response splits only that media type into supported status pulls (three for movies, five for shows/anime). Access
+tokens are operation arguments and are never stored in the library object.
+
+Successful library pulls have a 16 MiB streamed response cap; unrelated requests
+and error responses retain the 2 MiB cap. Pending item JSON is capped at 32 MiB in
+total, and each stored item or metadata JSON at 1 MiB. Exceeding a limit fails
+initialization without recording completion or truncating data.
+
+This implements the storage/initialization foundation in #13. Incremental freshness
+is tracked in #14, and routing the watchlist tool/resource through the cache in #15;
+existing watchlist reads still use Simkl directly until that integration lands.
+Migration `v2` adds the library object without changing the existing MCP migration.
+
+Run the fixture-only Worker RPC/persistence smoke test with
+`node tests/library-runtime/smoke.mjs`. It uses Wrangler's installed Miniflare and
+esbuild dependencies, redirects upstream fetches to fixture data, and makes no live
+Simkl requests. Fixtures never become production routes.
+
 ```bash
 # regenerate tools from the OpenAPI spec
 bun run codegen

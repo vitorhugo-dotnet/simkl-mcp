@@ -14,9 +14,17 @@ preview_id = "SIMKL_MCP"
 tag = "v1"
 new_sqlite_classes = ["SimklMCP"]
 
+[[migrations]]
+tag = "v2"
+new_sqlite_classes = ["SimklLibraryCache"]
+
 [[durable_objects.bindings]]
 name = "MCP_OBJECT"
 class_name = "SimklMCP"
+
+[[durable_objects.bindings]]
+name = "SIMKL_LIBRARY_CACHE"
+class_name = "SimklLibraryCache"
 
 # static assets configuration
 [assets]

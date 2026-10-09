@@ -1,0 +1,146 @@
+{
+  "shows": [
+    {
+      "added_to_watchlist_at": "2026-05-15T00:13:18Z",
+      "is_rewatch": false,
+      "last_watched": null,
+      "last_watched_at": "2026-05-15T00:13:18Z",
+      "memo": {},
+      "next_to_watch": null,
+      "not_aired_episodes_count": 0,
+      "seasons": [
+        {
+          "episodes": [
+            {
+              "ids": {
+                "tvdb_id": 3254641
+              },
+              "number": 1,
+              "runtime": 61,
+              "watched_at": "2026-05-15T00:13:18Z"
+            },
+            {
+              "ids": {
+                "tvdb_id": 3436411
+              },
+              "number": 2,
+              "runtime": 55,
+              "watched_at": "2026-05-15T00:13:18Z"
+            }
+          ],
+          "number": 1
+        }
+      ],
+      "show": {
+        "ids": {
+          "imdb": "tt0944947",
+          "simkl": 17465,
+          "slug": "game-of-thrones",
+          "tmdb": "1399",
+          "tvdb": "121361"
+        },
+        "poster": "57/5742576cd8f59fcb0",
+        "runtime": 52,
+        "title": "Game of Thrones",
+        "year": 2011
+      },
+      "status": "completed",
+      "total_episodes_count": 73,
+      "user_rated_at": null,
+      "user_rating": null,
+      "watched_episodes_count": 73
+    }
+  ],
+  "movies": [
+    {
+      "added_to_watchlist_at": "2026-04-10T20:13:02Z",
+      "is_rewatch": false,
+      "last_watched_at": "1994-09-01T16:00:00Z",
+      "memo": {},
+      "movie": {
+        "ids": {
+          "imdb": "tt0068646",
+          "simkl": 53434,
+          "slug": "the-godfather",
+          "tmdb": "238",
+          "tvdb": "275"
+        },
+        "poster": "10/102447562f6b49ff3a",
+        "runtime": 175,
+        "title": "The Godfather",
+        "year": 1972
+      },
+      "not_aired_episodes_count": 0,
+      "status": "completed",
+      "total_episodes_count": 0,
+      "user_rated_at": null,
+      "user_rating": null,
+      "watched_episodes_count": 0
+    }
+  ],
+  "anime": [
+    {
+      "added_to_watchlist_at": "2026-05-15T00:13:09Z",
+      "anime_type": "tv",
+      "is_rewatch": false,
+      "last_watched": null,
+      "last_watched_at": "2026-05-15T00:13:09Z",
+      "mapped_tvdb_seasons": [
+        1
+      ],
+      "memo": {},
+      "next_to_watch": null,
+      "not_aired_episodes_count": 0,
+      "seasons": [
+        {
+          "episodes": [
+            {
+              "ids": {
+                "tvdb_id": 219121
+              },
+              "number": 1,
+              "runtime": 30,
+              "tvdb": {
+                "episode": 1,
+                "season": 1
+              },
+              "watched_at": "2026-05-15T00:13:09Z"
+            },
+            {
+              "ids": {
+                "tvdb_id": 219122
+              },
+              "number": 2,
+              "runtime": 30,
+              "tvdb": {
+                "episode": 2,
+                "season": 1
+              },
+              "watched_at": "2026-05-15T00:13:09Z"
+            }
+          ],
+          "number": 1
+        }
+      ],
+      "show": {
+        "ids": {
+          "anidb": "23",
+          "anilist": "1",
+          "kitsu": "1",
+          "mal": "1",
+          "simkl": 37089,
+          "slug": "cowboy-bebop"
+        },
+        "poster": "36/36842f1bceb6b39",
+        "runtime": 25,
+        "title": "Cowboy Bebop",
+        "year": 1998
+      },
+      "status": "completed",
+      "total_episodes_count": 26,
+      "user_rated_at": null,
+      "user_rating": null,
+      "watched_episodes_count": 26
+    }
+  ]
+}
