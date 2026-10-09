@@ -11,6 +11,7 @@ export interface RequestOptions {
   method: 'GET' | 'POST' | 'DELETE';
   token?: string;
   authorization?: 'bearer' | 'none';
+  responseProfile?: 'library';
   body?: unknown;
   query?: Record<string, string | number | undefined>;
 }
@@ -147,7 +148,10 @@ export class SimklClient {
 
     let responseText: string;
     try {
-      responseText = await this.readResponseBody(response);
+      const libraryResponse = response.ok && options.method === 'GET'
+        && options.responseProfile === 'library'
+        && /^\/sync\/all-items\/(shows|movies|anime)(\/(watching|plantowatch|hold|completed|dropped))?$/.test(endpoint);
+      responseText = await this.readResponseBody(response, libraryResponse ? 16 * 1024 * 1024 : 2 * 1024 * 1024);
     } catch (error) {
       if (error instanceof SimklApiError) throw error;
       throw new SimklApiError('simkl api error: response body read failed', response.status, null, responseHeaders);
@@ -219,7 +223,7 @@ export class SimklClient {
     const reader = response.body?.getReader();
     if (!reader) {
       const text = await response.text();
-      if (text.length > limit) {
+      if (new TextEncoder().encode(text).byteLength > limit) {
         throw new SimklApiError('simkl api error: response too large', response.status, text.slice(0, 1024));
       }
       return text;
@@ -229,19 +233,23 @@ export class SimklClient {
     let result = '';
     let bytesRead = 0;
 
-    while (true) {
-      const { done, value } = await reader.read();
-      if (done) break;
-      bytesRead += value.byteLength;
-      result += decoder.decode(value, { stream: true });
-      if (bytesRead > limit) {
-        reader.cancel().catch(() => {});
-        throw new SimklApiError('simkl api error: response too large', response.status, result.slice(0, 1024));
+    try {
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        bytesRead += value.byteLength;
+        if (bytesRead > limit) {
+          reader.cancel().catch(() => {});
+          throw new SimklApiError('simkl api error: response too large', response.status, result.slice(0, 1024));
+        }
+        result += decoder.decode(value, { stream: true });
       }
-    }
 
-    result += decoder.decode();
-    return result;
+      result += decoder.decode();
+      return result;
+    } finally {
+      reader.releaseLock();
+    }
   }
 
   private parseResponseHeaders(response: Response): SimklResponseHeaders {
@@ -299,7 +307,7 @@ export class SimklApiError extends Error {
     let code = '';
     try {
       const parsed = JSON.parse(responseBody || '') as { error?: unknown };
-      if (typeof parsed.error === 'string' && ['rate_limit', 'user_limit_exceeded', 'app_limit_exceeded', 'user_token_required'].includes(parsed.error)) {
+      if (typeof parsed.error === 'string' && ['rate_limit', 'user_limit_exceeded', 'app_limit_exceeded', 'user_token_required', 'max_items'].includes(parsed.error)) {
         code = parsed.error;
       }
     } catch {
