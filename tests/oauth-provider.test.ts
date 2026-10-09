@@ -124,7 +124,7 @@ describe('Simkl provider token exchange callback', () => {
     expect(result.accessTokenTTL).toBe(120);
     expect(result.newProps).toMatchObject({
       simklToken: 'access-new', simklRefreshToken: 'refresh-new', custom: 'preserved', simklUserId: '42',
-    simklUserId: '42', simklScope: 'media:read',
+      simklScope: 'media:read',
     });
   });
 
