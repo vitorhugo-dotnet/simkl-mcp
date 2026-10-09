@@ -2,7 +2,7 @@
 
 Issue: https://github.com/vitorhugo-dotnet/simkl-mcp/issues/13
 
-Status: design approved in chat on 2026-10-09, including the six requested storage, identity, coordination, error, and response-limit requirements.
+Status: design approved in chat on 2026-10-09, including the six requested storage, identity, coordination, error, and response-limit requirements. Final review corrected three inferred API details against the checked-in Simkl OpenAPI: anime uses a `show` block, empty filtered responses are `{}`, and movie status fallback has three supported buckets.
 
 ## Goal and scope
 
@@ -28,7 +28,7 @@ A library service resolves verified identity and addresses the object. Provide s
 
 1. GET `/sync/activities` and validate an object with a nonempty top-level `all` timestamp. Hold this candidate snapshot without writing it.
 2. GET `/sync/all-items/shows`, `/sync/all-items/movies`, then `/sync/all-items/anime`, strictly sequentially. Never send `extended`, `date_from`, or ratings requests.
-3. Require each response's requested media array. Validate object items, their corresponding `show`/`movie`/`anime` identity, and positive Simkl IDs; reject malformed results instead of marking an incomplete cache ready. Empty arrays are valid.
+3. Accept the documented empty response `{}`; otherwise require the requested media array. Validate object items, their corresponding identity (`movie` for movies, `show` for both shows and anime), and positive Simkl IDs; reject malformed results instead of marking an incomplete cache ready. Empty arrays are valid.
 4. Preserve full item JSON, including user ratings and unknown optional fields. Key rows by media type and normalized Simkl ID. Identical duplicate rows may be collapsed; conflicting duplicate rows abort initialization rather than choose an arbitrary snapshot.
 5. Once all pulls, merging, serialization, and size validation succeed, persist items and the candidate snapshot atomically.
 
@@ -36,7 +36,7 @@ The activities snapshot predates item pulls intentionally: later incremental syn
 
 ## Split pulls and errors
 
-Extend the sanitized `SimklApiError.upstreamCode` allowlist with `max_items`. Only HTTP 400 with that exact upstream error triggers fallback. For the failed media type, sequentially GET `/sync/all-items/<type>/<status>` in this order: `watching`, `plantowatch`, `hold`, `completed`, `dropped`. Combine all responses and validate before commit. Continue subsequent media types only after this fallback succeeds. A split failure, including another `max_items`, aborts; there is no recursive split, unlimited retry, or silent truncation. Other HTTP 400 errors, quota errors, body-read failures, and invalid JSON propagate as sanitized failures and never advance completion metadata.
+Extend the sanitized `SimklApiError.upstreamCode` allowlist with `max_items`. Only HTTP 400 with that exact upstream error triggers fallback. For the failed media type, sequentially GET `/sync/all-items/<type>/<status>` in this order: `watching`, `plantowatch`, `hold`, `completed`, `dropped` for shows/anime; movies use only `plantowatch`, `completed`, `dropped`. Combine all responses and validate before commit. Continue subsequent media types only after this fallback succeeds. A split failure, including another `max_items`, aborts; there is no recursive split, unlimited retry, or silent truncation. Other HTTP 400 errors, quota errors, body-read failures, and invalid JSON propagate as sanitized failures and never advance completion metadata.
 
 ## Storage and atomicity
 

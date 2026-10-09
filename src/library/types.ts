@@ -18,6 +18,11 @@ export interface LibraryInitialization {
 
 export const MEDIA_TYPES: readonly MediaType[] = ['shows', 'movies', 'anime'];
 export const LIBRARY_STATUSES = ['watching', 'plantowatch', 'hold', 'completed', 'dropped'] as const;
+export const STATUSES_BY_MEDIA: Record<MediaType, readonly string[]> = {
+  shows: LIBRARY_STATUSES,
+  anime: LIBRARY_STATUSES,
+  movies: ['plantowatch', 'completed', 'dropped'],
+};
 export const MAX_ROW_JSON_BYTES = 1024 * 1024;
 export const MAX_PENDING_ITEM_BYTES = 32 * 1024 * 1024;
 

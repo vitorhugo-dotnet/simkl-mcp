@@ -36,7 +36,7 @@ function runtime() {
         await new Promise(resolve => setTimeout(resolve, 15));
         if (url.pathname === '/sync/activities') return Response.json({ all: '2026-10-09T12:00:00Z' });
         const media = url.pathname.split('/')[3];
-        const key = media === 'shows' ? 'show' : media === 'movies' ? 'movie' : 'anime';
+        const key = media === 'movies' ? 'movie' : 'show';
         return Response.json({ [media]: [{ [key]: { title: 'Fixture', ids: { simkl: 42 } }, user_rating: 8 }] });
       } finally { active--; }
     },

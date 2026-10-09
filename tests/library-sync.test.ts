@@ -1,9 +1,10 @@
 import { expect, test } from 'bun:test';
 import { SimklClient, SimklApiError } from '../src/api/client';
 import { fetchInitialLibrary } from '../src/library/sync';
+import documentedItems from './fixtures/library-items.json';
 
 const activities = { all: '2026-10-09T12:00:00Z', shows: { rated_at: '2026-10-09T12:00:00Z' } };
-const item = (media: string, id = 42, extra = {}) => ({ [media === 'shows' ? 'show' : media === 'movies' ? 'movie' : 'anime']: { ids: { simkl: id }, title: 'Example' }, user_rating: 8, ...extra });
+const item = (media: string, id = 42, extra = {}) => ({ [media === 'movies' ? 'movie' : 'show']: { ids: { simkl: id }, title: 'Example' }, user_rating: 8, ...extra });
 function setup(handle?: (path: string) => unknown | Promise<unknown>) {
   const client = new SimklClient({ baseUrl: 'https://api.simkl.com', clientId: 'app' });
   const calls: Array<{ path: string; options: any }> = [];
@@ -30,16 +31,16 @@ test('activities precede sequential non-extended media pulls, retaining all item
   expect(JSON.parse(candidate.items[0].itemJson)).toEqual(item('shows'));
 });
 
-test('400 max_items retries exactly the failed type with five sequential statuses', async () => {
+test('400 max_items retries exactly the failed type with supported sequential statuses', async () => {
   const { client, calls, peak } = setup(path => {
     if (path === '/sync/activities') return activities;
     if (path === '/sync/all-items/movies') throw new SimklApiError('too many', 400, '{"error":"max_items"}');
     const media = path.split('/')[3];
-    return { [media]: path.split('/')[4] ? [item(media, ['watching', 'plantowatch', 'hold', 'completed', 'dropped'].indexOf(path.split('/')[4]) + 1)] : [] };
+    return { [media]: path.split('/')[4] ? [item(media, ['plantowatch', 'completed', 'dropped'].indexOf(path.split('/')[4]) + 1)] : [] };
   });
   const result = await fetchInitialLibrary(client, 'token');
-  expect(calls.map(c => c.path)).toEqual(['/sync/activities', '/sync/all-items/shows', '/sync/all-items/movies', ...['watching', 'plantowatch', 'hold', 'completed', 'dropped'].map(s => `/sync/all-items/movies/${s}`), '/sync/all-items/anime']);
-  expect(result.items).toHaveLength(5);
+  expect(calls.map(c => c.path)).toEqual(['/sync/activities', '/sync/all-items/shows', '/sync/all-items/movies', ...['plantowatch', 'completed', 'dropped'].map(s => `/sync/all-items/movies/${s}`), '/sync/all-items/anime']);
+  expect(result.items).toHaveLength(3);
   expect(peak()).toBe(1);
 });
 
@@ -60,7 +61,7 @@ test('does not split other statuses/errors or recursively split a failed status'
 test('empty library succeeds while missing/malformed arrays and identities reject', async () => {
   const empty = setup(path => path === '/sync/activities' ? activities : { [path.split('/')[3]]: [] });
   expect((await fetchInitialLibrary(empty.client, 'token')).items).toEqual([]);
-  for (const response of [{}, { shows: null }, { shows: [{}] }, { shows: [item('movies')] }, { shows: [item('shows', 0)] }, { shows: ['bad'] }]) {
+  for (const response of [{ unexpected: true }, { movies: [item('movies')] }, { shows: null }, { shows: [{}] }, { shows: [item('movies')] }, { shows: [item('shows', 0)] }, { shows: ['bad'] }]) {
     const { client } = setup(path => path === '/sync/activities' ? activities : response);
     await expect(fetchInitialLibrary(client, 'token')).rejects.toThrow('Invalid Simkl library');
   }
@@ -84,4 +85,41 @@ test('row and aggregate serialized byte limits fail without truncation', async (
     [path.split('/')[3]]: Array.from({ length: 12 }, (_, id) => item(path.split('/')[3], id + 1, { extra: 'x'.repeat(950_000) })),
   });
   await expect(fetchInitialLibrary(large.client, 'token')).rejects.toThrow('Library initialization too large');
+});
+
+// Fixture extracted from checked-in Simkl OpenAPI: all_modifiers_inspection_only.
+test('documented anime rows use show identity and retain the entire record', async () => {
+  const { client } = setup(path => path === '/sync/activities' ? activities : { [path.split('/')[3]]: documentedItems[path.split('/')[3] as keyof typeof documentedItems] });
+  const result = await fetchInitialLibrary(client, 'token');
+  expect(result.items).toHaveLength(3);
+  const anime = result.items.find(row => row.mediaType === 'anime')!;
+  expect(anime.simklId).toBe(String(documentedItems.anime[0].show.ids.simkl));
+  expect(JSON.parse(anime.itemJson)).toEqual(documentedItems.anime[0]);
+});
+
+test('documented empty filtered responses initialize and empty split buckets are valid', async () => {
+  const empty = setup(path => path === '/sync/activities' ? activities : {});
+  expect((await fetchInitialLibrary(empty.client, 'token')).items).toEqual([]);
+  const split = setup(path => {
+    if (path === '/sync/activities') return activities;
+    if (path === '/sync/all-items/shows') throw new SimklApiError('split', 400, '{"error":"max_items"}');
+    return path === '/sync/all-items/shows/plantowatch' ? { shows: [item('shows')] } : {};
+  });
+  expect((await fetchInitialLibrary(split.client, 'token')).items).toHaveLength(1);
+});
+
+test('movie max_items pulls only supported plantowatch/completed/dropped statuses', async () => {
+  const statuses = ['plantowatch', 'completed', 'dropped'];
+  const { client, calls } = setup(path => {
+    if (path === '/sync/activities') return activities;
+    if (path === '/sync/all-items/movies') throw new SimklApiError('split', 400, '{"error":"max_items"}');
+    if (path.startsWith('/sync/all-items/movies/')) {
+      const status = path.split('/')[4];
+      if (!statuses.includes(status)) throw new SimklApiError('unsupported movie status', 400, '{}');
+      return { movies: [item('movies', statuses.indexOf(status) + 1)] };
+    }
+    return { [path.split('/')[3]]: [] };
+  });
+  expect((await fetchInitialLibrary(client, 'token')).items).toHaveLength(3);
+  expect(calls.filter(c => c.path.startsWith('/sync/all-items/movies/')).map(c => c.path)).toEqual(statuses.map(status => `/sync/all-items/movies/${status}`));
 });

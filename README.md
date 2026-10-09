@@ -89,7 +89,7 @@ selecting an object. Random provider fallback IDs never select library caches.
 object coalesces concurrent first reads, fetches activities and then shows, movies,
 and anime sequentially without `extended`, and commits separate item rows and the
 activities snapshot in a synchronous transaction after every pull succeeds. A
-`400 max_items` response splits only that media type into five status pulls. Access
+`400 max_items` response splits only that media type into supported status pulls (three for movies, five for shows/anime). Access
 tokens are operation arguments and are never stored in the library object.
 
 Successful library pulls have a 16 MiB streamed response cap; unrelated requests

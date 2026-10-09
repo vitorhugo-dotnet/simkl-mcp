@@ -15,7 +15,7 @@
 - New OAuth authorizations persist verified raw `simklUserId`; UUID fallbacks never address cache objects.
 - Initialization API calls run inside the Durable Object operation, with no persisted token.
 - Activities first, then shows/movies/anime sequentially, without `extended` or `date_from`.
-- Only HTTP 400 with `upstreamCode === 'max_items'` triggers five sequential status pulls.
+- Only HTTP 400 with `upstreamCode === 'max_items'` triggers sequential supported status pulls (three for movies, five for shows/anime).
 - Default responses: `2 * 1024 * 1024` bytes; successful allowlisted library pulls: `16 * 1024 * 1024` bytes.
 - Pending serialized items: at most `32 * 1024 * 1024` bytes; individual stored JSON: at most `1024 * 1024` UTF-8 bytes.
 - Network, validation, and serialization precede a synchronous storage transaction; items and completion metadata commit together.
@@ -73,7 +73,7 @@
 **Interfaces:** Produce `MediaType = 'shows' | 'movies' | 'anime'`, `LibraryItemRow = { mediaType: MediaType; simklId: string; itemJson: string }`, `LibraryCandidate = { activities: Record<string, unknown>; items: LibraryItemRow[] }`, `LibraryInitialization = { initialized: true; itemCount: number }`, and `fetchInitialLibrary(client: SimklClient, accessToken: string): Promise<LibraryCandidate>`.
 
 - [x] Add a deferred-fetch test asserting request order exactly activities/shows/movies/anime, with at most one request active. Assert no `extended`/`date_from`, preserved `user_rating` and optional fields, and no separate ratings fetch.
-- [x] Add fallback tests expecting the failed media request followed by watching/plantowatch/hold/completed/dropped, then remaining media types. Assert 400 without max_items never splits and a split failure stops all later calls.
+- [x] Add fallback tests expecting the failed media request followed by supported statuses (watching/plantowatch/hold/completed/dropped for shows/anime; plantowatch/completed/dropped for movies), then remaining media types. Assert 400 without max_items never splits and a split failure stops all later calls.
 - [x] Add tests for empty arrays, missing arrays, invalid activities.all, missing/wrong media identity, identical duplicates collapsing, conflicting duplicates rejecting, a >1 MiB item rejecting, and aggregate >32 MiB serialized item JSON rejecting before any commit.
 - [x] Run `bun test tests/library-sync.test.ts`; confirm failures for absent implementation.
 - [x] Implement fetch/validation/serialization with Task 1 normalization, Task 2 response profile, sequential loops, and bounded accumulation. Keep network-free data ready for the store transaction.

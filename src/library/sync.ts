@@ -1,7 +1,7 @@
 import { SimklApiError, type SimklClient } from '../api/client.js';
 import { normalizeSimklId } from './identity.js';
 import {
-  isRecord, jsonBytes, MEDIA_TYPES, LIBRARY_STATUSES, MAX_ROW_JSON_BYTES, MAX_PENDING_ITEM_BYTES,
+  isRecord, jsonBytes, MEDIA_TYPES, STATUSES_BY_MEDIA, MAX_ROW_JSON_BYTES, MAX_PENDING_ITEM_BYTES,
   type LibraryCandidate, type LibraryItemRow, type MediaType,
 } from './types.js';
 
@@ -14,10 +14,12 @@ export async function fetchInitialLibrary(client: SimklClient, accessToken: stri
   const items = new Map<string, LibraryItemRow>();
   let pendingBytes = 0;
   function append(response: unknown, mediaType: MediaType): void {
+    // Simkl omits all media keys for an empty filtered result.
+    if (isRecord(response) && Object.keys(response).length === 0) return;
     if (!isRecord(response) || !Array.isArray(response[mediaType])) {
       throw new Error('Invalid Simkl library response');
     }
-    const mediaKey = mediaType === 'shows' ? 'show' : mediaType === 'movies' ? 'movie' : 'anime';
+    const mediaKey = mediaType === 'movies' ? 'movie' : 'show';
     for (const item of response[mediaType]) {
       const media = isRecord(item) ? item[mediaKey] : undefined;
       const ids = isRecord(media) ? media.ids : undefined;
@@ -47,7 +49,7 @@ export async function fetchInitialLibrary(client: SimklClient, accessToken: stri
       response = await pull(`/sync/all-items/${mediaType}`);
     } catch (error) {
       if (!(error instanceof SimklApiError) || error.statusCode !== 400 || error.upstreamCode !== 'max_items') throw error;
-      for (const status of LIBRARY_STATUSES) {
+      for (const status of STATUSES_BY_MEDIA[mediaType]) {
         append(await pull(`/sync/all-items/${mediaType}/${status}`), mediaType);
       }
       continue;
