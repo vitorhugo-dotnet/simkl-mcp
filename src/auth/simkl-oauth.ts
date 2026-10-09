@@ -25,6 +25,7 @@ export interface SimklAuthProps extends Record<string, unknown> {
   simklExpiresAt: number;
   simklRefreshExpiresAt: number;
   simklScope?: string;
+  simklUserId?: string;
 }
 
 export async function createPkcePair(): Promise<{ codeVerifier: string; codeChallenge: string }> {

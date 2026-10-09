@@ -19,6 +19,7 @@ function props(expiresAt: number, refreshToken = 'refresh-old'): SimklAuthProps 
     simklRefreshExpiresAt: expiresAt + 180 * 24 * 60 * 60 * 1000,
     simklScope: 'media:read',
     custom: 'preserved',
+    simklUserId: '42',
   };
 }
 
@@ -122,7 +123,8 @@ describe('Simkl provider token exchange callback', () => {
     expect(atob(new Headers(tokenCall?.[1]?.headers).get('Authorization')!.slice('Basic '.length))).toBe('client:secret');
     expect(result.accessTokenTTL).toBe(120);
     expect(result.newProps).toMatchObject({
-      simklToken: 'access-new', simklRefreshToken: 'refresh-new', custom: 'preserved', simklScope: 'media:read',
+      simklToken: 'access-new', simklRefreshToken: 'refresh-new', custom: 'preserved', simklUserId: '42',
+    simklUserId: '42', simklScope: 'media:read',
     });
   });
 

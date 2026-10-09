@@ -92,9 +92,23 @@ describe('AUTH V2 handler', () => {
     expect(form.get('code_verifier')).toBe('stored-verifier-abcdefghijklmnopqrstuvwxyz0123456789');
     expect(completeAuthorization).toHaveBeenCalledWith(expect.objectContaining({
       request: { clientId: 'c', scope: 'read write' }, scope: ['read', 'write'], userId: 'simkl_user_42',
-      props: expect.objectContaining({ simklToken: 'access', simklRefreshToken: 'refresh' }),
+      props: expect.objectContaining({ simklToken: 'access', simklRefreshToken: 'refresh', simklUserId: '42' }),
     }));
     expect(deletes).toContain('oauth_state:s');
+  });
+
+  test('failed account lookup leaves verified ID absent while retaining provider fallback', async () => {
+    const { env, values, completeAuthorization } = setup();
+    values.set('oauth_state:s', JSON.stringify({ oauthRequest: {}, codeVerifier: 'abcdefghijklmnopqrstuvwxyz0123456789ABCDEFG', createdAt: Date.now() }));
+    successfulFetch();
+    const upstream = globalThis.fetch;
+    globalThis.fetch = (async (input, init) => String(input).includes('/users/settings')
+      ? new Response('{}', { status: 500 }) : upstream(input, init)) as typeof fetch;
+    const response = await handler.fetch(new Request('https://service.example/oauth/callback?code=c&state=s&iss=https%3A%2F%2Fsimkl.com'), env);
+    expect(response.status).toBe(302);
+    const call = completeAuthorization.mock.calls[0][0] as any;
+    expect(call.props.simklUserId).toBeUndefined();
+    expect(call.userId).toMatch(/^simkl_user_/);
   });
 
   test.each([

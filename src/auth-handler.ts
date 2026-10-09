@@ -5,6 +5,7 @@ import {
   type SimklOAuthEnv,
 } from './auth/simkl-oauth';
 import { APP_NAME, APP_VERSION, USER_AGENT } from './app-info';
+import { normalizeSimklId } from './library/identity.js';
 
 interface Env extends WorkerEnv, SimklOAuthEnv {
   OAUTH_PROVIDER: {
@@ -53,7 +54,7 @@ async function fetchSimklUserId(simklToken: string, env: Env): Promise<string | 
     if (!response.ok) return undefined;
     const settings = await response.json() as { account?: { id?: string | number } };
     const id = settings?.account?.id;
-    return id ? `simkl_user_${id}` : undefined;
+    return normalizeSimklId(id);
   } catch {
     return undefined;
   }
@@ -119,8 +120,9 @@ export default {
         };
         const requestedScopes = normalizeScopes((pending.oauthRequest as { scope?: unknown } | null)?.scope);
         const grantedScopes = requestedScopes.length ? requestedScopes : ['public'];
-        const userId = await fetchSimklUserId(tokenSet.accessToken, env)
-          || `simkl_user_${crypto.randomUUID()}`;
+        const simklUserId = await fetchSimklUserId(tokenSet.accessToken, env);
+        if (simklUserId) props.simklUserId = simklUserId;
+        const userId = `simkl_user_${simklUserId || crypto.randomUUID()}`;
         const { redirectTo } = await env.OAUTH_PROVIDER.completeAuthorization({
           request: pending.oauthRequest, userId, scope: grantedScopes, props,
         });
