@@ -48,11 +48,11 @@
 
 **Interfaces:** Produce `normalizeSimklId(value: unknown): string | undefined`, `resolveSimklUserId(client: SimklClient, token: string, knownId?: string): Promise<string>`, and optional `simklUserId: string` on shared `SimklAuthProps`. Normalization accepts positive safe-integer numbers and positive decimal strings; canonicalize leading zeros. Resolver returns known canonical ID or authenticated settings ID, and throws a sanitized error on failure.
 
-- [ ] Add failing assertions for `normalizeSimklId(42) === '42'`, `'00042' === '42'`, and rejection of `0`, negative/fractional/unsafe numbers, UUIDs, `simkl_user_42`, empty strings and objects. Assert resolver makes no fetch for known ID, retries after rejected lookup, and never returns the provider UUID.
-- [ ] Extend OAuth tests to assert `props.simklUserId === '42'` on successful settings fetch, absent verified prop on failed lookup, and preservation through refresh.
-- [ ] Run `bun test tests/library-identity.test.ts tests/auth-handler.test.ts tests/oauth-provider.test.ts`; confirm the new assertions fail before implementation.
-- [ ] Implement the exported helpers and shared props. Reuse normalization during login, preserving the current provider userId fallback separately. Preserve existing OAuth flow and sanitized errors.
-- [ ] Run those tests; expect all pass. Commit as `feat: retain verified Simkl account identity`.
+- [x] Add failing assertions for `normalizeSimklId(42) === '42'`, `'00042' === '42'`, and rejection of `0`, negative/fractional/unsafe numbers, UUIDs, `simkl_user_42`, empty strings and objects. Assert resolver makes no fetch for known ID, retries after rejected lookup, and never returns the provider UUID.
+- [x] Extend OAuth tests to assert `props.simklUserId === '42'` on successful settings fetch, absent verified prop on failed lookup, and preservation through refresh.
+- [x] Run `bun test tests/library-identity.test.ts tests/auth-handler.test.ts tests/oauth-provider.test.ts`; confirm the new assertions fail before implementation.
+- [x] Implement the exported helpers and shared props. Reuse normalization during login, preserving the current provider userId fallback separately. Preserve existing OAuth flow and sanitized errors.
+- [x] Run those tests; expect all pass. Commit as `feat: retain verified Simkl account identity`.
 
 ### Task 2: Library response profile and max_items classification
 
@@ -60,11 +60,11 @@
 
 **Interfaces:** Extend `RequestOptions` with optional `responseProfile: 'library'`. A successful allowlisted relative GET library path uses the larger cap; all other requests retain the default cap. Extend `SimklApiError.upstreamCode` with `max_items` using existing sanitized parsing.
 
-- [ ] Add failing tests: a valid library JSON body above 2 MiB succeeds with profile, the same body without profile fails, unrelated/absolute/POST requests cannot gain the larger limit, and non-success responses keep the default cap. Assert a 400 `{"error":"max_items"}` yields `upstreamCode === 'max_items'`; other 400 values do not.
-- [ ] Add byte-boundary tests: exactly selected cap succeeds; cap+1 fails; misleading/missing Content-Length does not bypass limits; multibyte input is counted as bytes; stream cancellation occurs on overflow; fallback UTF-8 measurement rejects overlimit bodies.
-- [ ] Run `bun test tests/api-client.test.ts tests/api-error.test.ts`; confirm expected failures.
-- [ ] Implement endpoint/method/status gating and checks before chunk decode/append. Retain sanitized error handling and existing request signatures.
-- [ ] Run those tests; expect pass. Commit as `feat: bound large library responses and detect max_items`.
+- [x] Add failing tests: a valid library JSON body above 2 MiB succeeds with profile, the same body without profile fails, unrelated/absolute/POST requests cannot gain the larger limit, and non-success responses keep the default cap. Assert a 400 `{"error":"max_items"}` yields `upstreamCode === 'max_items'`; other 400 values do not.
+- [x] Add byte-boundary tests: exactly selected cap succeeds; cap+1 fails; misleading/missing Content-Length does not bypass limits; multibyte input is counted as bytes; stream cancellation occurs on overflow; fallback UTF-8 measurement rejects overlimit bodies.
+- [x] Run `bun test tests/api-client.test.ts tests/api-error.test.ts`; confirm expected failures.
+- [x] Implement endpoint/method/status gating and checks before chunk decode/append. Retain sanitized error handling and existing request signatures.
+- [x] Run those tests; expect pass. Commit as `feat: bound large library responses and detect max_items`.
 
 ### Task 3: Sequential initialization fetch and validation
 
@@ -72,12 +72,12 @@
 
 **Interfaces:** Produce `MediaType = 'shows' | 'movies' | 'anime'`, `LibraryItemRow = { mediaType: MediaType; simklId: string; itemJson: string }`, `LibraryCandidate = { activities: Record<string, unknown>; items: LibraryItemRow[] }`, `LibraryInitialization = { initialized: true; itemCount: number }`, and `fetchInitialLibrary(client: SimklClient, accessToken: string): Promise<LibraryCandidate>`.
 
-- [ ] Add a deferred-fetch test asserting request order exactly activities/shows/movies/anime, with at most one request active. Assert no `extended`/`date_from`, preserved `user_rating` and optional fields, and no separate ratings fetch.
-- [ ] Add fallback tests expecting the failed media request followed by watching/plantowatch/hold/completed/dropped, then remaining media types. Assert 400 without max_items never splits and a split failure stops all later calls.
-- [ ] Add tests for empty arrays, missing arrays, invalid activities.all, missing/wrong media identity, identical duplicates collapsing, conflicting duplicates rejecting, a >1 MiB item rejecting, and aggregate >32 MiB serialized item JSON rejecting before any commit.
-- [ ] Run `bun test tests/library-sync.test.ts`; confirm failures for absent implementation.
-- [ ] Implement fetch/validation/serialization with Task 1 normalization, Task 2 response profile, sequential loops, and bounded accumulation. Keep network-free data ready for the store transaction.
-- [ ] Run those tests; expect pass. Commit as `feat: fetch and validate initial Simkl library`.
+- [x] Add a deferred-fetch test asserting request order exactly activities/shows/movies/anime, with at most one request active. Assert no `extended`/`date_from`, preserved `user_rating` and optional fields, and no separate ratings fetch.
+- [x] Add fallback tests expecting the failed media request followed by watching/plantowatch/hold/completed/dropped, then remaining media types. Assert 400 without max_items never splits and a split failure stops all later calls.
+- [x] Add tests for empty arrays, missing arrays, invalid activities.all, missing/wrong media identity, identical duplicates collapsing, conflicting duplicates rejecting, a >1 MiB item rejecting, and aggregate >32 MiB serialized item JSON rejecting before any commit.
+- [x] Run `bun test tests/library-sync.test.ts`; confirm failures for absent implementation.
+- [x] Implement fetch/validation/serialization with Task 1 normalization, Task 2 response profile, sequential loops, and bounded accumulation. Keep network-free data ready for the store transaction.
+- [x] Run those tests; expect pass. Commit as `feat: fetch and validate initial Simkl library`.
 
 ### Task 4: SQLite persistence and object-owned coordination
 
@@ -85,12 +85,12 @@
 
 **Interfaces:** `LibraryStore(storage: DurableObjectStorage)` exposes `getInitialization(): LibraryInitialization | null`, `commit(candidate: LibraryCandidate): LibraryInitialization`, and `readItems(): LibraryItemRow[]`. `SimklLibraryCache` exposes RPC `ensureInitialized(accessToken: string): Promise<LibraryInitialization>` and `readItems(): Promise<LibraryItemRow[]>` (reject until complete). Constructor creates schema idempotently. Use actual SQLite via Bun test adapter for store tests; fake only the Cloudflare lifecycle interface.
 
-- [ ] Add real SQL tests using the spec's schema: commit one row per type/ID; retain ratings; completion count matches deduplicated rows; empty commit is complete; new store instance reads existing completion. Inject failure during item insertion and during metadata insertion, assert rollback leaves prior data and completion unchanged. Assert an oversized metadata object is rejected before transaction.
-- [ ] Add object tests with deferred upstream fetch: two calls with distinct session tokens on one object trigger one entire sequence, and a second object runs independently. Assert no library fetching happens before the object operation and neither token appears in stored rows/metadata/results or persistent object fields.
-- [ ] Test concurrent rejection, subsequent retry with a new token, cache-hit no fetch, reconstruction using persisted completion, and readItems rejecting before initialization. Assert no transaction callback returns a Promise and network fetch runs outside the transaction.
-- [ ] Run `bun test tests/library-store.test.ts tests/library-cache.test.ts`; confirm new tests fail.
-- [ ] Implement parameterized SQL, row validation before transaction, synchronous transactionSync commit, and operation-local token closure. Set the in-flight promise before yielding; clear it safely in finally on success/failure.
-- [ ] Run those tests; expect pass. Commit as `feat: persist and coalesce library sync in a Durable Object`.
+- [x] Add real SQL tests using the spec's schema: commit one row per type/ID; retain ratings; completion count matches deduplicated rows; empty commit is complete; new store instance reads existing completion. Inject failure during item insertion and during metadata insertion, assert rollback leaves prior data and completion unchanged. Assert an oversized metadata object is rejected before transaction.
+- [x] Add object tests with deferred upstream fetch: two calls with distinct session tokens on one object trigger one entire sequence, and a second object runs independently. Assert no library fetching happens before the object operation and neither token appears in stored rows/metadata/results or persistent object fields.
+- [x] Test concurrent rejection, subsequent retry with a new token, cache-hit no fetch, reconstruction using persisted completion, and readItems rejecting before initialization. Assert no transaction callback returns a Promise and network fetch runs outside the transaction.
+- [x] Run `bun test tests/library-store.test.ts tests/library-cache.test.ts`; confirm new tests fail.
+- [x] Implement parameterized SQL, row validation before transaction, synchronous transactionSync commit, and operation-local token closure. Set the in-flight promise before yielding; clear it safely in finally on success/failure.
+- [x] Run those tests; expect pass. Commit as `feat: persist and coalesce library sync in a Durable Object`.
 
 ### Task 5: Service, bindings, runtime verification, and PR
 
@@ -98,12 +98,12 @@
 
 **Interfaces:** `LibraryService(client: SimklClient, namespace: DurableObjectNamespace<SimklLibraryCache>, getAuth: () => { simklToken: string; simklUserId?: string })` exposes `ensureInitialized(): Promise<LibraryInitialization>` and `readItems(): Promise<LibraryItemRow[]>`. It coalesces legacy identity resolution within the service, retains successful canonical identity, and invokes the object using the current operation token. `readItems` first ensures initialization, then reads rows. Produce exported `SimklLibraryCache` plus `SIMKL_LIBRARY_CACHE` Worker binding and appended v2 SQLite migration.
 
-- [ ] Add failing service tests: verified user 42 maps to `simkl-library:v1:42`; separate sessions for 42 select the same object; user 43 selects another; legacy sessions resolve settings before object selection; failed/malformed lookup never selects an object; a later call retries; service performs no all-items calls itself.
-- [ ] Run `bun test tests/library-service.test.ts`; confirm expected failures.
-- [ ] Implement the service, export/binding/migration, and README scope/limits. Do not modify watchlist tool/resource routing. Regenerate Worker types with `npx wrangler types` using installed Wrangler.
-- [ ] Run a Worker runtime fixture with mock upstream activities/items and two concurrent calls against the actual binding. Verify one fetch sequence, persisted hit after object reconstruction, and actual RPC serializability. Use installed Wrangler/Miniflare tooling; keep fixture routes outside production exports. Save exact command and output in PR validation notes.
-- [ ] Run `bun test`, `bun run typecheck`, and `npx wrangler deploy --dry-run`; expect no failures. If tooling is missing, install development tooling in task scratch space and document the reproducible invocation; do not replace meaningful checks with text matching.
-- [ ] Inspect final diff against origin/main for secrets, scope creep, transaction async work, identity fallback, limits, and migration preservation. Commit as `feat: expose per-user library cache foundation`.
+- [x] Add failing service tests: verified user 42 maps to `simkl-library:v1:42`; separate sessions for 42 select the same object; user 43 selects another; legacy sessions resolve settings before object selection; failed/malformed lookup never selects an object; a later call retries; service performs no all-items calls itself.
+- [x] Run `bun test tests/library-service.test.ts`; confirm expected failures.
+- [x] Implement the service, export/binding/migration, and README scope/limits. Do not modify watchlist tool/resource routing. Regenerate Worker types with `npx wrangler types` using installed Wrangler.
+- [x] Run a Worker runtime fixture with mock upstream activities/items and two concurrent calls against the actual binding. Verify one fetch sequence, persisted hit after object reconstruction, and actual RPC serializability. Use installed Wrangler/Miniflare tooling; keep fixture routes outside production exports. Save exact command and output in PR validation notes.
+- [x] Run `bun test`, `bun run typecheck`, and `npx wrangler deploy --dry-run`; expect no failures. If tooling is missing, install development tooling in task scratch space and document the reproducible invocation; do not replace meaningful checks with text matching.
+- [x] Inspect final diff against origin/main for secrets, scope creep, transaction async work, identity fallback, limits, and migration preservation. Commit as `feat: expose per-user library cache foundation`.
 - [ ] Push `codex/issue-13-library-cache` and open a PR targeting main, titled `Add per-user SQLite library cache initialization`. PR body explains persistent verified identity, object coordination, atomic row storage, bounded split pulls, #14/#15 handoff, exact validation, and `Closes #13`. Do not merge or close the issue manually; GitHub closes it when the PR merges.
 
 ## Self-review

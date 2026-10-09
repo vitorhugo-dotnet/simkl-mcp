@@ -5,6 +5,7 @@ import authHandler from './auth-handler.js';
 import { refreshSimklToken, type SimklAuthProps, type SimklOAuthEnv, type SimklTokenSet } from './auth/simkl-oauth.js';
 
 export { SimklMCP };
+export { SimklLibraryCache } from './library/cache.js';
 
 type Env = WorkerEnv & SimklOAuthEnv;
 
