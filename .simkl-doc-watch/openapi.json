@@ -2695,6 +2695,14 @@
               "null"
             ]
           },
+          "original_language": {
+            "description": "Type 4 null — no language on file for this title. See [Null and missing values](/conventions/null-values). The title's original language as a lower-case ISO 639-1 code (`en`, `ja`, `ko`) — the same field and format as `original_language` in the [trending](/api-reference/trending) and [calendar](/api-reference/calendar) files.",
+            "example": "ja",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
           "overview": {
             "description": "Type 4 null — data not on file in that field's slot. See [Null and missing values](/conventions/null-values).",
             "type": [
@@ -2880,7 +2888,7 @@
             ]
           },
           "trailers": {
-            "description": "Type 4 null — data not on file in that field's slot. See [Null and missing values](/conventions/null-values).",
+            "description": "Type 4 null — data not on file in that field's slot. See [Null and missing values](/conventions/null-values). **Order:** English-language videos first, then by source and name — **not** grouped by `type`, so filter on `type` rather than relying on position.",
             "items": {
               "properties": {
                 "name": {
@@ -2894,6 +2902,24 @@
                   "description": "Type 4 null — data not on file in that field's slot. See [Null and missing values](/conventions/null-values).",
                   "type": [
                     "integer",
+                    "null"
+                  ]
+                },
+                "type": {
+                  "description": "Type 4 null — the video has no kind on file. See [Null and missing values](/conventions/null-values). What the video is: `trailer`, `teaser`, `clip`, `featurette`, `behind_the_scenes`, `bloopers` or `opening_credits`. Filter on it to show trailers only, or to group extras by kind.",
+                  "enum": [
+                    "trailer",
+                    "teaser",
+                    "clip",
+                    "featurette",
+                    "behind_the_scenes",
+                    "bloopers",
+                    "opening_credits",
+                    null
+                  ],
+                  "example": "trailer",
+                  "type": [
+                    "string",
                     "null"
                   ]
                 },
@@ -4783,6 +4809,14 @@
             "description": "ISO 639-1 language code in UPPERCASE.",
             "type": "string"
           },
+          "original_language": {
+            "description": "Type 4 null — no language on file for this title. See [Null and missing values](/conventions/null-values). The title's original language as a lower-case ISO 639-1 code (`en`, `ja`, `ko`) — the same field and format as `original_language` in the [trending](/api-reference/trending) and [calendar](/api-reference/calendar) files. Movies also return `language`: the same code in upper case.",
+            "example": "en",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
           "overview": {
             "description": "Plot synopsis. Type 4 null when no overview is available.",
             "type": [
@@ -4923,7 +4957,7 @@
             "type": "string"
           },
           "trailers": {
-            "description": "YouTube-hosted trailers and promo clips. Type 4 null when no trailers on file.",
+            "description": "YouTube-hosted trailers and promo clips. Type 4 null when no trailers on file. **Order:** English-language videos first, then by `type` in the order listed on that field (`trailer` first, `opening_credits` last; videos with no `type` sit right after the trailers), then largest `size` first.",
             "items": {
               "properties": {
                 "name": {
@@ -4937,6 +4971,24 @@
                   "description": "Type 4 null — data not on file in that field's slot. See [Null and missing values](/conventions/null-values). Max video resolution height (720, 1080, 2160).",
                   "type": [
                     "integer",
+                    "null"
+                  ]
+                },
+                "type": {
+                  "description": "Type 4 null — the video has no kind on file. See [Null and missing values](/conventions/null-values). What the video is: `trailer`, `teaser`, `clip`, `featurette`, `behind_the_scenes`, `bloopers` or `opening_credits`. Filter on it to show trailers only, or to group extras by kind.",
+                  "enum": [
+                    "trailer",
+                    "teaser",
+                    "clip",
+                    "featurette",
+                    "behind_the_scenes",
+                    "bloopers",
+                    "opening_credits",
+                    null
+                  ],
+                  "example": "trailer",
+                  "type": [
+                    "string",
                     "null"
                   ]
                 },
@@ -6019,7 +6071,7 @@
         "description": "Response for `/scrobble/start`, `/scrobble/pause`, `/scrobble/stop` and `/scrobble/checkin`.\n\n`rewatch_id` and `rewatch_status` are present only on a `scrobble` action (a `/scrobble/stop` with progress >= 80) that was sent with `?allow_rewatch=yes`. On every other call they are absent entirely.",
         "properties": {
           "action": {
-            "description": "`start` for /start, `pause` for /pause and for /stop with progress<80, `scrobble` for /stop with progress≥80 (item marked watched).",
+            "description": "`start` for /start, `pause` for /pause and for /stop with progress below `min_progress` (80 by default), `scrobble` for /stop at or above it (item marked watched).",
             "enum": [
               "start",
               "pause",
@@ -6790,6 +6842,14 @@
               "null"
             ]
           },
+          "original_language": {
+            "description": "Type 4 null — no language on file for this title. See [Null and missing values](/conventions/null-values). The title's original language as a lower-case ISO 639-1 code (`en`, `ja`, `ko`) — the same field and format as `original_language` in the [trending](/api-reference/trending) and [calendar](/api-reference/calendar) files.",
+            "example": "en",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
           "overview": {
             "description": "Type 4 null — data not on file in that field's slot. See [Null and missing values](/conventions/null-values).",
             "type": [
@@ -6897,7 +6957,7 @@
             ]
           },
           "trailers": {
-            "description": "Type 4 null — data not on file in that field's slot. See [Null and missing values](/conventions/null-values).",
+            "description": "Type 4 null — data not on file in that field's slot. See [Null and missing values](/conventions/null-values). **Order:** English-language videos first, then by `type` in the order listed on that field (`trailer` first, `opening_credits` last; videos with no `type` sit right after the trailers), then largest `size` first.",
             "items": {
               "properties": {
                 "name": {
@@ -6911,6 +6971,24 @@
                   "description": "Type 4 null — data not on file in that field's slot. See [Null and missing values](/conventions/null-values).",
                   "type": [
                     "integer",
+                    "null"
+                  ]
+                },
+                "type": {
+                  "description": "Type 4 null — the video has no kind on file. See [Null and missing values](/conventions/null-values). What the video is: `trailer`, `teaser`, `clip`, `featurette`, `behind_the_scenes`, `bloopers` or `opening_credits`. Filter on it to show trailers only, or to group extras by kind.",
+                  "enum": [
+                    "trailer",
+                    "teaser",
+                    "clip",
+                    "featurette",
+                    "behind_the_scenes",
+                    "bloopers",
+                    "opening_credits",
+                    null
+                  ],
+                  "example": "trailer",
+                  "type": [
+                    "string",
                     "null"
                   ]
                 },
@@ -8630,6 +8708,7 @@
                       },
                       "last_aired": "2007-06-27",
                       "network": "Nippon TV",
+                      "original_language": "ja",
                       "poster": "60/60822040ab21d22b",
                       "rank": 5,
                       "ratings": {
@@ -8712,6 +8791,7 @@
                         1
                       ],
                       "network": "Fuji TV",
+                      "original_language": "ja",
                       "overview": "It is the Taisho Period in Japan. Tanjiro, a kindhearted boy who sells charcoal for a living, finds his family slaughtered by a demon. To make matters worse, his younger sister Nezuko, the sole survivor, has been transformed into a demon herself.",
                       "poster": "10/108215c95bbe0c40c",
                       "rank": 14,
@@ -8851,8 +8931,9 @@
                       "total_episodes": 55,
                       "trailers": [
                         {
-                          "name": "PV",
+                          "name": "Trailer 1",
                           "size": 1080,
+                          "type": "trailer",
                           "youtube": "VQGCKyvzIM4"
                         }
                       ],
@@ -11311,6 +11392,7 @@
                         "tw": "thegodfather"
                       },
                       "language": "EN",
+                      "original_language": "en",
                       "ratings": {
                         "imdb": {
                           "rating": 9.2,
@@ -11374,6 +11456,7 @@
                         "tvdbslug": "inception"
                       },
                       "language": "EN",
+                      "original_language": "en",
                       "overview": "Cobb, a skilled thief who commits corporate espionage by infiltrating the subconscious of his targets is offered a chance to regain his old life as payment for a task considered to be impossible: \"inception\", the implantation of another person's idea into a target's subconscious.",
                       "poster": "14/14017865947c9d3d0d",
                       "rank": 20,
@@ -11478,14 +11561,16 @@
                       "title": "Inception",
                       "trailers": [
                         {
-                          "name": "Official Trailer",
-                          "size": 1080,
-                          "youtube": "Jvurpf91omw"
-                        },
-                        {
                           "name": "Official New UK Trailer",
                           "size": 1080,
+                          "type": "trailer",
                           "youtube": "JE9z-gy4De4"
+                        },
+                        {
+                          "name": "Official Trailer",
+                          "size": 1080,
+                          "type": "trailer",
+                          "youtube": "Jvurpf91omw"
                         }
                       ],
                       "type": "movie",
@@ -13255,6 +13340,19 @@
               ],
               "type": "string"
             }
+          },
+          {
+            "description": "Progress (percent) the user's **previous** open `start` / `checkin` session must have reached to be marked watched when this check-in replaces it. Default `80`. It does not change when this check-in completes — that is always at 100 % of the runtime. Send a whole number from 50 to 100: values above 100 count as 100, values from 1 to 49 count as 50, decimals are dropped, and `0` or an empty value means the default. **URL query string only** — a `min_progress` key in the JSON body is ignored. Send the same value on `start`, `checkin` and `stop` so every check uses one threshold.",
+            "example": 90,
+            "in": "query",
+            "name": "min_progress",
+            "required": false,
+            "schema": {
+              "default": 80,
+              "maximum": 100,
+              "minimum": 50,
+              "type": "integer"
+            }
           }
         ],
         "requestBody": {
@@ -13868,7 +13966,7 @@
     },
     "/scrobble/start": {
       "post": {
-        "description": "Creates or replaces the user's active \"watching now\" session for the given item. Call this when playback begins, or to resume a previously paused session.\n\n#### Body shape\n\nSend `progress` plus exactly one of `movie`, `show`+`episode`, or `anime`+`episode`. See [Standard media objects](/conventions/standard-media-objects).\n\n| Field | Type | Notes |\n|---|---|---|\n| `progress` | float | 0–100, max 2 decimals. Response normalizes to `75` not `75.00`. |\n| `movie` / `show` / `anime` | object | Title + year + ids. `simkl` ID alone is enough. |\n| `episode` | object | `season` + `number`, or `ids`. Required for shows/anime. |\n\n#### Behavior\n\n- Replaces any existing session for this item and clears prior pauses.\n- Auto-expires after the calculated remaining runtime.\n- If a previous start/checkin reached **≥ 80 %** before this call, it is **auto-scrobbled** (marked watched) before the new session starts.\n- Response shape: `id`, `action`, `progress`, plus the media object with `ids` (incl. external links Simkl knows about) and an `episode` block. For anime, the response includes both AniDB-canonical `season`/`number` and original `tvdb_season`/`tvdb_number`.\n\n#### Seek and scrub behavior\n\nDon't call `/scrobble/start` on a seek event. Only call it when playback actually begins or resumes (typically the player's `play` event). When a user scrubs to a different position before pressing play, just update your local progress; the eventual `play` event fires the call with the new value.\n\n#### Errors\n\n| Code | When |\n|---|---|\n| `400empty_field` | No `movie`, `show`, or `anime` in the body. |\n| `400RATE_LIMIT` | A 20-second per-user lock collision — another scrobble write for this user landed within the window. Note: HTTP `400`, **not** `429` — the lock failure is treated as a malformed request from a duplicate-fire client. |\n| `401user_token_failed` | Missing / invalid bearer token. |\n| `404id_err` | Item could not be matched. |\n\n<Card title=\"Scrobble guide — full walkthrough\" icon=\"play\" href=\"/guides/scrobble\" horizontal>\n Real-time playback tracking — `/start`, `/pause`, `/stop` lifecycle, paused-playback resumption across devices, when scrobble auto-completes, and the difference between `/scrobble/checkin` (fire-and-forget) and `/scrobble/start` (active tracking).\n</Card>\n\nAlternative to `episode.season` + `episode.number`: pass `episode.ids` with `tvdb` or `anidb` to identify the exact episode by external episode ID. Useful for Plex / media-server integrations that have a TVDB or AniDB episode ID but not the season/number mapping. (Episode-level `imdb` and `tmdb` IDs are **not** accepted — those exist only at the show/movie level. Use the `show`/`anime` object's `ids` for those.) If both forms are sent, `episode.ids` takes precedence.\n\n<Tip>\n**Which IDs can I send/expect?** All accepted input identifiers and the keys you'll see echoed back in responses are listed at [**Standard media objects → Supported ID keys**](/conventions/standard-media-objects#supported-id-keys). Send every ID you have on writes — Simkl picks the first that resolves and ignores the rest. Reminder: `slug` is **response-only** (never send it on a request).\n</Tip>\n\n#### Rewatches\n\n`?allow_rewatch=yes` is accepted here but **should not be sent**. This endpoint marks nothing watched, so it never returns `rewatch_id` / `rewatch_status`. Worse, it auto-scrobbles the user's *previous* outstanding playback once that reaches 80%, and the flag is honoured on that path — which may be a different title, with nothing in the response to report it. Send it on [`POST /scrobble/stop`](/api-reference/simkl/scrobble-stop) or [`POST /scrobble/checkin`](/api-reference/simkl/scrobble-checkin) instead. See the [Rewatches guide](/guides/rewatches).",
+        "description": "Creates or replaces the user's active \"watching now\" session for the given item. Call this when playback begins, or to resume a previously paused session.\n\n#### Body shape\n\nSend `progress` plus exactly one of `movie`, `show`+`episode`, or `anime`+`episode`. See [Standard media objects](/conventions/standard-media-objects).\n\n| Field | Type | Notes |\n|---|---|---|\n| `progress` | float | 0–100, max 2 decimals. Response normalizes to `75` not `75.00`. |\n| `movie` / `show` / `anime` | object | Title + year + ids. `simkl` ID alone is enough. |\n| `episode` | object | `season` + `number`, or `ids`. Required for shows/anime. |\n\n#### Behavior\n\n- Replaces any existing session for this item and clears prior pauses.\n- Auto-expires after the calculated remaining runtime.\n- If a previous start/checkin reached **`min_progress`** (80 % unless you send `?min_progress=` on this call) before this call, it is **auto-scrobbled** (marked watched) before the new session starts.\n- Response shape: `id`, `action`, `progress`, plus the media object with `ids` (incl. external links Simkl knows about) and an `episode` block. For anime, the response includes both AniDB-canonical `season`/`number` and original `tvdb_season`/`tvdb_number`.\n\n#### Seek and scrub behavior\n\nDon't call `/scrobble/start` on a seek event. Only call it when playback actually begins or resumes (typically the player's `play` event). When a user scrubs to a different position before pressing play, just update your local progress; the eventual `play` event fires the call with the new value.\n\n#### Errors\n\n| Code | When |\n|---|---|\n| `400empty_field` | No `movie`, `show`, or `anime` in the body. |\n| `400RATE_LIMIT` | A 20-second per-user lock collision — another scrobble write for this user landed within the window. Note: HTTP `400`, **not** `429` — the lock failure is treated as a malformed request from a duplicate-fire client. |\n| `401user_token_failed` | Missing / invalid bearer token. |\n| `404id_err` | Item could not be matched. |\n\n<Card title=\"Scrobble guide — full walkthrough\" icon=\"play\" href=\"/guides/scrobble\" horizontal>\n Real-time playback tracking — `/start`, `/pause`, `/stop` lifecycle, paused-playback resumption across devices, when scrobble auto-completes, and the difference between `/scrobble/checkin` (fire-and-forget) and `/scrobble/start` (active tracking).\n</Card>\n\nAlternative to `episode.season` + `episode.number`: pass `episode.ids` with `tvdb` or `anidb` to identify the exact episode by external episode ID. Useful for Plex / media-server integrations that have a TVDB or AniDB episode ID but not the season/number mapping. (Episode-level `imdb` and `tmdb` IDs are **not** accepted — those exist only at the show/movie level. Use the `show`/`anime` object's `ids` for those.) If both forms are sent, `episode.ids` takes precedence.\n\n<Tip>\n**Which IDs can I send/expect?** All accepted input identifiers and the keys you'll see echoed back in responses are listed at [**Standard media objects → Supported ID keys**](/conventions/standard-media-objects#supported-id-keys). Send every ID you have on writes — Simkl picks the first that resolves and ignores the rest. Reminder: `slug` is **response-only** (never send it on a request).\n</Tip>\n\n#### Rewatches\n\n`?allow_rewatch=yes` is accepted here but **should not be sent**. This endpoint marks nothing watched, so it never returns `rewatch_id` / `rewatch_status`. Worse, it auto-scrobbles the user's *previous* outstanding playback once that reaches 80%, and the flag is honoured on that path — which may be a different title, with nothing in the response to report it. Send it on [`POST /scrobble/stop`](/api-reference/simkl/scrobble-stop) or [`POST /scrobble/checkin`](/api-reference/simkl/scrobble-checkin) instead. See the [Rewatches guide](/guides/rewatches).",
         "operationId": "post-scrobble-start",
         "parameters": [
           {
@@ -13905,6 +14003,19 @@
                 "no"
               ],
               "type": "string"
+            }
+          },
+          {
+            "description": "Progress (percent) the user's **previous** open `start` / `checkin` session must have reached to be marked watched when this call replaces it. Default `80`. This call marks nothing watched itself. Send a whole number from 50 to 100: values above 100 count as 100, values from 1 to 49 count as 50, decimals are dropped, and `0` or an empty value means the default. **URL query string only** — a `min_progress` key in the JSON body is ignored. Send the same value on `start`, `checkin` and `stop` so every check uses one threshold.",
+            "example": 90,
+            "in": "query",
+            "name": "min_progress",
+            "required": false,
+            "schema": {
+              "default": 80,
+              "maximum": 100,
+              "minimum": 50,
+              "type": "integer"
             }
           }
         ],
@@ -14147,7 +14258,7 @@
     },
     "/scrobble/stop": {
       "post": {
-        "description": "Finalizes the user's playback session. The `action` field in the response tells you what Simkl did:\n\n| `progress` | `action` | Result |\n|---|---|---|\n| **≥ 80** | `scrobble` | Item is marked watched. |\n| **< 80** | `pause` | Session is saved as a paused playback. |\n\nWhen `progress < 80`, the session is kept as a **resumable playback**, retrievable cross-device via [`GET /sync/playback/{type}`](/api-reference/simkl/get-playback-sessions). When `progress ≥ 80`, the item is marked watched and no playback is saved. See the [Playback overview](/api-reference/playback) for retention.\n\nBody shape is identical to [`/scrobble/start`](/api-reference/simkl/scrobble-start).\n\n#### Duplicate prevention\n\nStopping a session that's already been finalized within the past hour returns **`409 Conflict`** with `watched_at` and `expires_at` so you know when the prior scrobble expires:\n\n```json\n{\n \"watched_at\": \"2024-05-01T18:00:00-05:00\",\n \"expires_at\": \"2024-05-01T19:00:00-05:00\"\n}\n```\n\n**Three separate windows guard this endpoint, and they are easy to mix up:**\n\n| Window | Applies to | What happens |\n|---|---|---|\n| **20 seconds** | Any scrobble call, per user | A second in-flight call collides with the per-user lock and returns `400` with `RATE_LIMIT`. |\n| **1 hour** | Re-stopping the same item | Returns `409 Conflict` with `watched_at` / `expires_at`, as above. The watch is already recorded. |\n| **2 days** | Rewatches only (`?allow_rewatch=yes`) | Two watches of the same movie or episode must be at least 2 days apart. Anything closer is absorbed into the existing session and reports `rewatch_status: \"too_soon\"`. |\n\nThe 2-day gap is deliberate: it absorbs player retries, scrubbing back and forth across the 80% mark, and importer re-runs, which would otherwise fill the user's history with phantom sessions. It is **not** an error and must not be retried. See [The 2-day gap](/guides/rewatches#the-2-day-gap).\n\n#### Seek and scrub behavior\n\nThe ≥80% auto-scrobble rule applies to the `progress` you send with this call — not to anywhere the user temporarily scrubbed during playback. A user who scrubbed to 95% mid-watch but then rewinds and stops at 30% sends `progress: 30`, and the server stores `action: \"pause\"`. Only the value at the moment of `stop` matters.\n\n> **Note:** A 20-second per-user lock collision returns HTTP `400` with `RATE_LIMIT`, not `429` — the lock failure is treated as a malformed request from a duplicate-fire client.\n\n<Card title=\"Scrobble guide — full walkthrough\" icon=\"play\" href=\"/guides/scrobble\" horizontal>\n Real-time playback tracking — `/start`, `/pause`, `/stop` lifecycle, paused-playback resumption across devices, when scrobble auto-completes, and the difference between `/scrobble/checkin` (fire-and-forget) and `/scrobble/start` (active tracking).\n</Card>\n\nAlternative to `episode.season` + `episode.number`: pass `episode.ids` with `tvdb` or `anidb` to identify the exact episode by external episode ID. Useful for Plex / media-server integrations that have a TVDB or AniDB episode ID but not the season/number mapping. (Episode-level `imdb` and `tmdb` IDs are **not** accepted — those exist only at the show/movie level. Use the `show`/`anime` object's `ids` for those.) If both forms are sent, `episode.ids` takes precedence.\n\n<Tip>\n**Which IDs can I send/expect?** All accepted input identifiers and the keys you'll see echoed back in responses are listed at [**Standard media objects → Supported ID keys**](/conventions/standard-media-objects#supported-id-keys). Send every ID you have on writes — Simkl picks the first that resolves and ignores the rest. Reminder: `slug` is **response-only** (never send it on a request).\n</Tip>\n\n#### Rewatches\n\nA `/scrobble/stop` with `progress` ≥ 80 marks the item watched — but when the user has **already completed that item**, that write is a **no-op**: the server detects the duplicate and skips it. To record it as a separate rewatch session instead, send `?allow_rewatch=yes`. Detection is automatic from the outcome; there is no per-item flag on this endpoint.\n\n**The 80 threshold still gates everything.** A rewatch can only exist where a watch does, so a stop below 80 resolves to `action: \"pause\"` — resume position saved, nothing marked, and **no `rewatch_*` keys in the response** whether or not you sent the flag. If `rewatch_status` is missing, read `action` first: `\"pause\"` means the progress was too low, not that the rewatch was rejected.\n\n**Send the flag on `/scrobble/stop` or [`/scrobble/checkin`](/api-reference/simkl/scrobble-checkin) — never on `/start` or `/pause`.** Those two mark nothing watched, so they can't produce a session for the item in the request. Worse, `/start` auto-scrobbles the user's *previous* outstanding playback once its progress passes 80%, and that path honours the flag: the previous row may belong to a **different title**, and no response field reports it, so the flag on `/start` can silently open a rewatch on something the user isn't looking at.\n\n**Simkl PRO / VIP only.** Free-tier callers get `rewatch_status: \"pro_required\"` and no session — unlike [`POST /sync/history`](/api-reference/simkl/add-to-history), which fails silently, so you can read the reason straight off the response. Still worth gating client-side: check `account.type` from [`GET /users/settings`](/api-reference/simkl/get-user-settings) at sign-in and enable the flag only for `\"pro\"` / `\"vip\"`. Cache that value; refetch only when `activities.settings.all` from [`GET /sync/activities`](/api-reference/simkl/get-activities) bumps. Expose a per-user *Track rewatches* toggle that defaults to off. Full pattern in the [Rewatches guide](/guides/rewatches).\n\nWhen the flag is set, two keys are added to a `scrobble` response:\n\n| Key | Notes |\n|---|---|\n| `rewatch_id` | The session this watch landed on, or `null`. A session that is already running reports its id **even when it rejected this watch** — read `rewatch_status`, never the presence of an id, to find out whether the watch was recorded. |\n| `rewatch_status` | What happened to this watch. |\n\n| `rewatch_status` | Meaning |\n|---|---|\n| `active` | Recorded on a session that is still in progress. Typical for TV / anime. |\n| `completed` | Recorded on a session that is now complete. Movie sessions are created complete, so a movie rewatch reports `completed`, not `active`. |\n| `closed` | Recorded on a session that was manually closed or left partial. |\n| `first_watch` | Not a re-viewing. This is the original watch, and no session was created. |\n| `too_soon` | Rejected by the **2-day gap** required between two watches of the same item. |\n| `not_eligible` | The item's watchlist status is plan-to-watch. |\n| `pro_required` | The account is not Simkl PRO or VIP. |\n| `null` | The watch itself failed to record, so no rewatch was attempted. |\n\n**On [`/scrobble/checkin`](/api-reference/simkl/scrobble-checkin) these keys are absent**, because a check-in doesn't mark anything watched at request time. The flag is remembered on the check-in and applied when it matures. You find out what happened by reading the sessions back from [`GET /sync/all-items?allow_rewatch=yes`](/api-reference/simkl/get-all-items), not from the response.\n",
+        "description": "Finalizes the user's playback session. The `action` field in the response tells you what Simkl did:\n\n| `progress` | `action` | Result |\n|---|---|---|\n| **≥ 80** | `scrobble` | Item is marked watched. |\n| **< 80** | `pause` | Session is saved as a paused playback. |\n\n**80 is the default.** Add `?min_progress=` to the URL to use your own threshold between 50 and 100 — for example `?min_progress=90` to mark watched only near the end. See the `min_progress` parameter below.\n\nWhen `progress < 80`, the session is kept as a **resumable playback**, retrievable cross-device via [`GET /sync/playback/{type}`](/api-reference/simkl/get-playback-sessions). When `progress ≥ 80`, the item is marked watched and no playback is saved. See the [Playback overview](/api-reference/playback) for retention.\n\nBody shape is identical to [`/scrobble/start`](/api-reference/simkl/scrobble-start).\n\n#### Duplicate prevention\n\nStopping a session that's already been finalized within the past hour returns **`409 Conflict`** with `watched_at` and `expires_at` so you know when the prior scrobble expires:\n\n```json\n{\n \"watched_at\": \"2024-05-01T18:00:00-05:00\",\n \"expires_at\": \"2024-05-01T19:00:00-05:00\"\n}\n```\n\n**Three separate windows guard this endpoint, and they are easy to mix up:**\n\n| Window | Applies to | What happens |\n|---|---|---|\n| **20 seconds** | Any scrobble call, per user | A second in-flight call collides with the per-user lock and returns `400` with `RATE_LIMIT`. |\n| **1 hour** | Re-stopping the same item | Returns `409 Conflict` with `watched_at` / `expires_at`, as above. The watch is already recorded. |\n| **2 days** | Rewatches only (`?allow_rewatch=yes`) | Two watches of the same movie or episode must be at least 2 days apart. Anything closer is absorbed into the existing session and reports `rewatch_status: \"too_soon\"`. |\n\nThe 2-day gap is deliberate: it absorbs player retries, scrubbing back and forth across the 80% mark, and importer re-runs, which would otherwise fill the user's history with phantom sessions. It is **not** an error and must not be retried. See [The 2-day gap](/guides/rewatches#the-2-day-gap).\n\n#### Seek and scrub behavior\n\nThe ≥80% auto-scrobble rule applies to the `progress` you send with this call — not to anywhere the user temporarily scrubbed during playback. A user who scrubbed to 95% mid-watch but then rewinds and stops at 30% sends `progress: 30`, and the server stores `action: \"pause\"`. Only the value at the moment of `stop` matters.\n\n> **Note:** A 20-second per-user lock collision returns HTTP `400` with `RATE_LIMIT`, not `429` — the lock failure is treated as a malformed request from a duplicate-fire client.\n\n<Card title=\"Scrobble guide — full walkthrough\" icon=\"play\" href=\"/guides/scrobble\" horizontal>\n Real-time playback tracking — `/start`, `/pause`, `/stop` lifecycle, paused-playback resumption across devices, when scrobble auto-completes, and the difference between `/scrobble/checkin` (fire-and-forget) and `/scrobble/start` (active tracking).\n</Card>\n\nAlternative to `episode.season` + `episode.number`: pass `episode.ids` with `tvdb` or `anidb` to identify the exact episode by external episode ID. Useful for Plex / media-server integrations that have a TVDB or AniDB episode ID but not the season/number mapping. (Episode-level `imdb` and `tmdb` IDs are **not** accepted — those exist only at the show/movie level. Use the `show`/`anime` object's `ids` for those.) If both forms are sent, `episode.ids` takes precedence.\n\n<Tip>\n**Which IDs can I send/expect?** All accepted input identifiers and the keys you'll see echoed back in responses are listed at [**Standard media objects → Supported ID keys**](/conventions/standard-media-objects#supported-id-keys). Send every ID you have on writes — Simkl picks the first that resolves and ignores the rest. Reminder: `slug` is **response-only** (never send it on a request).\n</Tip>\n\n#### Rewatches\n\nA `/scrobble/stop` with `progress` ≥ 80 marks the item watched — but when the user has **already completed that item**, that write is a **no-op**: the server detects the duplicate and skips it. To record it as a separate rewatch session instead, send `?allow_rewatch=yes`. Detection is automatic from the outcome; there is no per-item flag on this endpoint.\n\n**The 80 threshold still gates everything.** A rewatch can only exist where a watch does, so a stop below 80 resolves to `action: \"pause\"` — resume position saved, nothing marked, and **no `rewatch_*` keys in the response** whether or not you sent the flag. If `rewatch_status` is missing, read `action` first: `\"pause\"` means the progress was too low, not that the rewatch was rejected.\n\n**Send the flag on `/scrobble/stop` or [`/scrobble/checkin`](/api-reference/simkl/scrobble-checkin) — never on `/start` or `/pause`.** Those two mark nothing watched, so they can't produce a session for the item in the request. Worse, `/start` auto-scrobbles the user's *previous* outstanding playback once its progress passes 80%, and that path honours the flag: the previous row may belong to a **different title**, and no response field reports it, so the flag on `/start` can silently open a rewatch on something the user isn't looking at.\n\n**Simkl PRO / VIP only.** Free-tier callers get `rewatch_status: \"pro_required\"` and no session — unlike [`POST /sync/history`](/api-reference/simkl/add-to-history), which fails silently, so you can read the reason straight off the response. Still worth gating client-side: check `account.type` from [`GET /users/settings`](/api-reference/simkl/get-user-settings) at sign-in and enable the flag only for `\"pro\"` / `\"vip\"`. Cache that value; refetch only when `activities.settings.all` from [`GET /sync/activities`](/api-reference/simkl/get-activities) bumps. Expose a per-user *Track rewatches* toggle that defaults to off. Full pattern in the [Rewatches guide](/guides/rewatches).\n\nWhen the flag is set, two keys are added to a `scrobble` response:\n\n| Key | Notes |\n|---|---|\n| `rewatch_id` | The session this watch landed on, or `null`. A session that is already running reports its id **even when it rejected this watch** — read `rewatch_status`, never the presence of an id, to find out whether the watch was recorded. |\n| `rewatch_status` | What happened to this watch. |\n\n| `rewatch_status` | Meaning |\n|---|---|\n| `active` | Recorded on a session that is still in progress. Typical for TV / anime. |\n| `completed` | Recorded on a session that is now complete. Movie sessions are created complete, so a movie rewatch reports `completed`, not `active`. |\n| `closed` | Recorded on a session that was manually closed or left partial. |\n| `first_watch` | Not a re-viewing. This is the original watch, and no session was created. |\n| `too_soon` | Rejected by the **2-day gap** required between two watches of the same item. |\n| `not_eligible` | The item's watchlist status is plan-to-watch. |\n| `pro_required` | The account is not Simkl PRO or VIP. |\n| `null` | The watch itself failed to record, so no rewatch was attempted. |\n\n**On [`/scrobble/checkin`](/api-reference/simkl/scrobble-checkin) these keys are absent**, because a check-in doesn't mark anything watched at request time. The flag is remembered on the check-in and applied when it matures. You find out what happened by reading the sessions back from [`GET /sync/all-items?allow_rewatch=yes`](/api-reference/simkl/get-all-items), not from the response.\n",
         "operationId": "post-scrobble-stop",
         "parameters": [
           {
@@ -14184,6 +14295,19 @@
                 "no"
               ],
               "type": "string"
+            }
+          },
+          {
+            "description": "Progress (percent) at which this stop marks the item **watched** (`action: \"scrobble\"`) instead of saving a pause. Default `80`. Send a whole number from 50 to 100: values above 100 count as 100, values from 1 to 49 count as 50, decimals are dropped, and `0` or an empty value means the default. **URL query string only** — a `min_progress` key in the JSON body is ignored. Send the same value on `start`, `checkin` and `stop` so every check uses one threshold.",
+            "example": 90,
+            "in": "query",
+            "name": "min_progress",
+            "required": false,
+            "schema": {
+              "default": 80,
+              "maximum": 100,
+              "minimum": 50,
+              "type": "integer"
             }
           }
         ],
@@ -15634,7 +15758,7 @@
     },
     "/search/{type}": {
       "get": {
-        "description": "<Danger>\n**Never call search before scrobbling or marking something watched.**\n\nThis is the most common wasted request we see. Apps look the title up here first to get a Simkl ID, then send that ID to the write endpoint. **The lookup is unnecessary.** Every write endpoint resolves the item itself, from whatever you already have:\n\n```json\n{\n  \"movie\": {\n    \"title\": \"Dune: Part Two\",\n    \"year\": 2024,\n    \"ids\": { \"imdb\": \"tt15239678\", \"tmdb\": \"693134\" }\n  }\n}\n```\n\nPass any combination of IDs, plus `title` and `year` as fallbacks, in the **same request** that records the watch. Simkl matches it server-side. A Simkl ID is never required.\n\nThat applies to [`/scrobble/*`](/api-reference/scrobble), [`POST /sync/history`](/api-reference/simkl/add-to-history), [`POST /sync/add-to-list`](/api-reference/simkl/add-to-list) and [`POST /sync/ratings`](/api-reference/simkl/add-ratings) alike.\n\nSearching first doubles your request count for no benefit, burns rate limit you'll want later, and picks the wrong title whenever the search ranking disagrees with the IDs you already hold. **One call, not two.**\n\nUse search only when you have **no usable IDs at all**: a title the user typed, a file name, or a random pick.\n</Danger>\n\nFull-text search over the Simkl catalog. Pick a type (`movie`, `tv`, or `anime`) and pass a search term like `john wick` or `john wick 2014`.\n\n<Note>\n**Heads up: `movie` becomes `\"movies\"` in the response.**\n\nYou call `/search/movie` (no `s`) but each item in the response has `endpoint_type: \"movies\"` (with an `s`). TV and anime don't change.\n\n| You call | Each item's `endpoint_type` is |\n|---|---|\n| `/search/movie` | `\"movies\"` ← note the extra `s` |\n| `/search/tv` | `\"tv\"` |\n| `/search/anime` | `\"anime\"` |\n\nEvery item in a single response has the same `endpoint_type` — you never get a mixed list back.\n</Note>\n\n#### Path parameter\n\n| Param | Values |\n|---|---|\n| `type` | `movie`, `tv`, `anime` |\n\n#### Query parameters\n\n| Param | Default | Notes |\n|---|---|---|\n| `q` | — | **Required.** Text query (matches `title` and `all_titles[]`). For external-ID lookups (IMDb / TMDB / TVDB / etc.), use [`/redirect`](/api-reference/redirect) or [`/search/id`](/api-reference/simkl/search-by-id) instead. |\n| `page` | `1` | Hard-capped server-side at `20`. Higher values silently clamp. |\n| `limit` | `10` | Hard-capped server-side at `50`. Higher values silently clamp. |\n| `extended` | `simple` | `full` adds `all_titles[]`, `url`, `ep_count` (TV/anime), `rank` (nullable), `status` (TV/anime), and a `ratings` block. |\n\nReturns paginated results with `X-Pagination-*` headers — see [Pagination](/conventions/pagination) for the standard paginator pattern.\n\n#### Per-item fields by mode\n\n| Field | `simple` | `extended=full` | Notes |\n|---|---|---|---|\n| `title` | ✓ | ✓ | Display title in the user's locale. |\n| `title_en` | — | — | **Anime only**, optional even on anime — only when an English-localized title is on file. |\n| `title_romaji` | anime only | anime only | **Anime only**, always present on anime items. Currently mirrors `title` for the romaji slot. |\n| `year` | ✓ | ✓ | Premiere year. |\n| `endpoint_type` | ✓ | ✓ | `\"movies\"` / `\"tv\"` / `\"anime\"`. Same value on every item in one response. |\n| `type` | anime only | anime only | **Anime only**: `tv`, `movie`, `ova`, `ona`, `special`, `music`. |\n| `poster` | ✓ | ✓ | Image path fragment — see [Image conventions](/conventions/images) for the full URL pattern (`https://wsrv.nl/?url=https://simkl.in/posters/{poster}_m.webp&q=90`). |\n| `ids` | ✓ | ✓ | `{ simkl_id, slug, tmdb? }`. `tmdb` only present when a TMDB link is on file. |\n| `all_titles` | — | movies/anime | Aliases / localized variants. Anime sees the most entries. TV items typically don't carry this even on `extended=full`. |\n| `url` | — | ✓ | Relative simkl.com URL (with slug). |\n| `ep_count` | — | TV/anime | Total episode count when known. |\n| `rank` | — | ✓ | Simkl popularity rank. **Nullable** — see below. |\n| `status` | — | TV/anime | Closed enum: `tba`, `ended`, `airing`. |\n| `ratings.simkl` | — | ✓ | `{ rating, votes }` — only present when votes > 0. |\n| `ratings.imdb` | — | ✓ | `{ rating, votes }` — only present when an IMDb rating record exists. |\n| `ratings.mal` | — | anime only | `{ rating, votes, rank }` — anime only, only when a MAL record exists. |\n\n#### Nulls — what they mean\n\n| Field | When null | Type |\n|---|---|---|\n| `rank` | Item not yet ranked, or rank value ≥ 999999 sentinel | [Type 4](/conventions/null-values#type-4) |\n| `ep_count` | TV/anime item with no episode count on file yet | [Type 4](/conventions/null-values#type-4) |\n| `poster` | No poster image on file | [Type 4](/conventions/null-values#type-4) |\n\n#### Error responses\n\n| Status | When |\n|---|---|\n| `412 client_id_failed` | Missing or invalid `client_id` |\n| `500` | Server error |\n\nNo `400` — invalid `page` / `limit` silently clamp to the server caps. No `404` — empty result is `[]` with status `200`.\n\n<Tip>\n**Which IDs can I send/expect?** All accepted input identifiers and the keys you'll see echoed back in responses are listed at [**Standard media objects → Supported ID keys**](/conventions/standard-media-objects#supported-id-keys). Send every ID you have on writes — Simkl picks the first that resolves and ignores the rest. Reminder: `slug` is **response-only** (never send it on a request).\n</Tip>",
+        "description": "<Danger>\n**Never call search before scrobbling or marking something watched.**\n\nThis is the most common wasted request we see. Apps look the title up here first to get a Simkl ID, then send that ID to the write endpoint. **The lookup is unnecessary.** Every write endpoint resolves the item itself, from whatever you already have:\n\n```json\n{\n  \"movie\": {\n    \"title\": \"Dune: Part Two\",\n    \"year\": 2024,\n    \"ids\": { \"imdb\": \"tt15239678\", \"tmdb\": \"693134\" }\n  }\n}\n```\n\nPass any combination of IDs, plus `title` and `year` as fallbacks, in the **same request** that records the watch. Simkl matches it server-side. A Simkl ID is never required.\n\nThat applies to [`/scrobble/*`](/api-reference/scrobble), [`POST /sync/history`](/api-reference/simkl/add-to-history), [`POST /sync/add-to-list`](/api-reference/simkl/add-to-list) and [`POST /sync/ratings`](/api-reference/simkl/add-ratings) alike.\n\nSearching first doubles your request count for no benefit, burns rate limit you'll want later, and picks the wrong title whenever the search ranking disagrees with the IDs you already hold. **One call, not two.**\n\nUse search only when you have **no usable IDs at all**: a title the user typed, a file name, or a random pick.\n</Danger>\n\nFull-text search over the Simkl catalog. Pick a type (`movie`, `tv`, or `anime`) and pass a search term like `john wick` or `john wick 2014`.\n\n<Note>\n**Heads up: `movie` becomes `\"movies\"` in the response.**\n\nYou call `/search/movie` (no `s`) but each item in the response has `endpoint_type: \"movies\"` (with an `s`). TV and anime don't change.\n\n| You call | Each item's `endpoint_type` is |\n|---|---|\n| `/search/movie` | `\"movies\"` ← note the extra `s` |\n| `/search/tv` | `\"tv\"` |\n| `/search/anime` | `\"anime\"` |\n\nEvery item in a single response has the same `endpoint_type` — you never get a mixed list back.\n</Note>\n\n#### Path parameter\n\n| Param | Values |\n|---|---|\n| `type` | `movie`, `tv`, `anime` |\n\n#### Query parameters\n\n| Param | Default | Notes |\n|---|---|---|\n| `q` | — | **Required.** Text query (matches `title` and `all_titles[]`). For external-ID lookups (IMDb / TMDB / TVDB / etc.), use [`/redirect`](/api-reference/redirect) or [`/search/id`](/api-reference/simkl/search-by-id) instead. |\n| `page` | `1` | Hard-capped server-side at `20`. Higher values silently clamp. |\n| `limit` | `10` | Hard-capped server-side at `50`. Higher values silently clamp. |\n| `extended` | `simple` | `full` adds `all_titles[]`, `url`, `ep_count` (TV/anime), `rank` (nullable), `status` (TV/anime), and a `ratings` block. |\n| `sort` | `relevance` | Result order: `relevance`, `release-date`, `last-air-date` (TV and anime only), `title` or `rank` — see **Sorting** below. Any other value is a `400`. |\n\nReturns paginated results with `X-Pagination-*` headers — see [Pagination](/conventions/pagination) for the standard paginator pattern.\n\n#### Sorting\n\n`sort` changes the order of the matches, not which titles match, and paging keeps it — page 2 continues where page 1 stopped.\n\n| `sort` | Order |\n|---|---|\n| `relevance` *(default)* | Best match first, then the more popular title. |\n| `release-date` | Newest release first. Upcoming titles come before released ones. |\n| `last-air-date` | Most recently aired first. **TV and anime only** — on `/search/movie` it returns `400`. |\n| `title` | A–Z. Titles that start with punctuation or a number come before `A`. |\n| `rank` | Simkl rank, most popular first. |\n\nValues are case-insensitive, and an empty `sort=` means `relevance`. Any other value returns `400 wrong_parameter`, with the accepted values listed in `message`.\n\n#### Per-item fields by mode\n\n| Field | `simple` | `extended=full` | Notes |\n|---|---|---|---|\n| `title` | ✓ | ✓ | Display title in the user's locale. |\n| `title_en` | — | — | **Anime only**, optional even on anime — only when an English-localized title is on file. |\n| `title_romaji` | anime only | anime only | **Anime only**, always present on anime items. Currently mirrors `title` for the romaji slot. |\n| `year` | ✓ | ✓ | Premiere year. |\n| `endpoint_type` | ✓ | ✓ | `\"movies\"` / `\"tv\"` / `\"anime\"`. Same value on every item in one response. |\n| `type` | anime only | anime only | **Anime only**: `tv`, `movie`, `ova`, `ona`, `special`, `music`. |\n| `poster` | ✓ | ✓ | Image path fragment — see [Image conventions](/conventions/images) for the full URL pattern (`https://wsrv.nl/?url=https://simkl.in/posters/{poster}_m.webp&q=90`). |\n| `ids` | ✓ | ✓ | `{ simkl_id, slug, tmdb? }`. `tmdb` only present when a TMDB link is on file. |\n| `all_titles` | — | movies/anime | Aliases / localized variants. Anime sees the most entries. TV items typically don't carry this even on `extended=full`. |\n| `url` | — | ✓ | Relative simkl.com URL (with slug). |\n| `ep_count` | — | TV/anime | Total episode count when known. |\n| `rank` | — | ✓ | Simkl popularity rank. **Nullable** — see below. |\n| `status` | — | TV/anime | Closed enum: `tba`, `ended`, `airing`. |\n| `ratings.simkl` | — | ✓ | `{ rating, votes }` — only present when votes > 0. |\n| `ratings.imdb` | — | ✓ | `{ rating, votes }` — only present when an IMDb rating record exists. |\n| `ratings.mal` | — | anime only | `{ rating, votes, rank }` — anime only, only when a MAL record exists. |\n\n#### Nulls — what they mean\n\n| Field | When null | Type |\n|---|---|---|\n| `rank` | Item not yet ranked, or rank value ≥ 999999 sentinel | [Type 4](/conventions/null-values#type-4) |\n| `ep_count` | TV/anime item with no episode count on file yet | [Type 4](/conventions/null-values#type-4) |\n| `poster` | No poster image on file | [Type 4](/conventions/null-values#type-4) |\n\n#### Error responses\n\n| Status | When |\n|---|---|\n| `400 wrong_parameter` | `sort` is not one of the values above, or `last-air-date` on `/search/movie` |\n| `412 client_id_failed` | Missing or invalid `client_id` |\n| `500` | Server error |\n\nInvalid `page` / `limit` never return `400` — they silently clamp to the server caps. No `404` — empty result is `[]` with status `200`.\n\n<Tip>\n**Which IDs can I send/expect?** All accepted input identifiers and the keys you'll see echoed back in responses are listed at [**Standard media objects → Supported ID keys**](/conventions/standard-media-objects#supported-id-keys). Send every ID you have on writes — Simkl picks the first that resolves and ignores the rest. Reminder: `slug` is **response-only** (never send it on a request).\n</Tip>",
         "operationId": "get-search-type",
         "parameters": [
           {
@@ -15686,6 +15810,24 @@
               "enum": [
                 "simple",
                 "full"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "description": "Result order. `relevance` (default) puts the best match first; `release-date` newest first; `last-air-date` most recently aired first — **TV and anime only**, a `400` on `movie`; `title` A–Z; `rank` most popular first. Case is ignored, and an empty value means `relevance`. Any other value returns `400 wrong_parameter`.",
+            "example": "relevance",
+            "in": "query",
+            "name": "sort",
+            "required": false,
+            "schema": {
+              "default": "relevance",
+              "enum": [
+                "relevance",
+                "release-date",
+                "last-air-date",
+                "title",
+                "rank"
               ],
               "type": "string"
             }
@@ -15971,6 +16113,21 @@
                 }
               }
             }
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "code": 400,
+                  "error": "wrong_parameter",
+                  "message": "Invalid sort parameter. Use relevance, release-date, title, rank, last-air-date"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "`wrong_parameter` — `sort` is not one of `relevance`, `release-date`, `last-air-date`, `title`, `rank`, or `last-air-date` was sent to `/search/movie`."
           },
           "412": {
             "$ref": "#/components/responses/ClientIdFailed"
@@ -23467,6 +23624,7 @@
                       },
                       "last_aired": "2019-05-19",
                       "network": "HBO",
+                      "original_language": "en",
                       "overview": "Seven noble families fight for control of the mythical land of Westeros. Friction between the houses leads to full-scale war. All while a very ancient evil awakens in the farthest north.",
                       "poster": "57/5742576cd8f59fcb0",
                       "rank": 6,
@@ -23536,9 +23694,46 @@
                       "total_episodes": 73,
                       "trailers": [
                         {
-                          "name": "Season 1 Trailer",
+                          "name": "Game of Thrones | Official Series Trailer",
                           "size": 1080,
+                          "type": "trailer",
+                          "youtube": "KPLWWIOCOOQ"
+                        },
+                        {
+                          "name": "Official Trailer",
+                          "size": 720,
+                          "type": "trailer",
                           "youtube": "BpJYNVhGf1s"
+                        },
+                        {
+                          "name": "Iron Throne Preview",
+                          "size": 720,
+                          "type": "teaser",
+                          "youtube": "hhqRmcsWqac"
+                        },
+                        {
+                          "name": "Inside Game of Thrones",
+                          "size": 360,
+                          "type": "featurette",
+                          "youtube": "nf5YvIn6XB8"
+                        },
+                        {
+                          "name": "Inside Game of Thrones: A Story in Camera Work",
+                          "size": 1080,
+                          "type": "behind_the_scenes",
+                          "youtube": "y2ZJ3lTaREY"
+                        },
+                        {
+                          "name": "Inside Game of Thrones: A Story in Prosthetics",
+                          "size": 720,
+                          "type": "behind_the_scenes",
+                          "youtube": "f3MUpuRF6Ck"
+                        },
+                        {
+                          "name": "Opening Credits",
+                          "size": 720,
+                          "type": "opening_credits",
+                          "youtube": "s7L2PVdrb_8"
                         }
                       ],
                       "type": "show",
@@ -23607,6 +23802,7 @@
                       },
                       "last_aired": "2022-11-20",
                       "network": "AMC",
+                      "original_language": "en",
                       "poster": "16/16913426086fc13",
                       "rank": 41,
                       "ratings": {
@@ -24192,7 +24388,7 @@
       "name": "Ratings"
     },
     {
-      "description": "Report real-time playback to Simkl with `start`, `pause`, and `stop`. At ≥ 80 % progress Simkl marks the item as watched automatically; below 80 % the session is saved as a paused playback the user can resume from any device.\n\nSee [Standard media objects](/conventions/standard-media-objects) for the supported ID keys.\n\n<!-- IDS_TABLE_START -->\n\n### Supported ID keys\n\nInside any `ids` object, pass as many of these as you have. Simkl resolves to the canonical record.\n\n| ID key | Type | Example |\n|---|---|---|\n| `simkl` | integer | `49108`. Simkl's canonical ID. Most reliable. |\n| `imdb` | string | `tt1520211` |\n| `tmdb` | integer | `76757` (for TV, specify `type`) |\n| `tvdb` | int / string | `153021` or `the-walking-dead` |\n| `mal` | integer | `4246` (MyAnimeList) |\n| `anidb` | integer | `10846`. Specifying just this is enough for anime lookups. |\n| `anilist` | integer | `21` |\n| `kitsu` | integer | `12` |\n| `anisearch` | integer | `2227` |\n| `animeplanet` | string | `one-piece` |\n| `livechart` | integer | `321` |\n| `letterboxd` | string | `the-truman-show` |\n| `netflix` | integer | `70210890` (movie ID) |\n| `traktslug` | string | `john-wick-chapter-4-2023` |\n\n> 📖 Full reference: [Standard media objects](/conventions/standard-media-objects)\n\n<!-- IDS_TABLE_END -->",
+      "description": "Report real-time playback to Simkl with `start`, `pause`, and `stop`. At ≥ 80 % progress (adjustable per call with `?min_progress=`) Simkl marks the item as watched automatically; below that the session is saved as a paused playback the user can resume from any device.\n\nSee [Standard media objects](/conventions/standard-media-objects) for the supported ID keys.\n\n<!-- IDS_TABLE_START -->\n\n### Supported ID keys\n\nInside any `ids` object, pass as many of these as you have. Simkl resolves to the canonical record.\n\n| ID key | Type | Example |\n|---|---|---|\n| `simkl` | integer | `49108`. Simkl's canonical ID. Most reliable. |\n| `imdb` | string | `tt1520211` |\n| `tmdb` | integer | `76757` (for TV, specify `type`) |\n| `tvdb` | int / string | `153021` or `the-walking-dead` |\n| `mal` | integer | `4246` (MyAnimeList) |\n| `anidb` | integer | `10846`. Specifying just this is enough for anime lookups. |\n| `anilist` | integer | `21` |\n| `kitsu` | integer | `12` |\n| `anisearch` | integer | `2227` |\n| `animeplanet` | string | `one-piece` |\n| `livechart` | integer | `321` |\n| `letterboxd` | string | `the-truman-show` |\n| `netflix` | integer | `70210890` (movie ID) |\n| `traktslug` | string | `john-wick-chapter-4-2023` |\n\n> 📖 Full reference: [Standard media objects](/conventions/standard-media-objects)\n\n<!-- IDS_TABLE_END -->",
       "externalDocs": {
         "description": "Scrobble guide",
         "url": "https://api.simkl.org/guides/scrobble"
