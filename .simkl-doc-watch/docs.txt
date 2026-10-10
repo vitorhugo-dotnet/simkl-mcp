@@ -5120,7 +5120,7 @@ Pass as much data as you can (title, year, `ids`) so Simkl can detect the item r
 | - | - |
 | [`POST /scrobble/start`](/api-reference/simkl/scrobble-start) | Marks the user as **"Watching now"** on their profile. Does **not** mark the item as watched. |
 | [`POST /scrobble/pause`](/api-reference/simkl/scrobble-pause) | Saves the current `progress` so the user can resume later. |
-| [`POST /scrobble/stop`](/api-reference/simkl/scrobble-stop) | Ends the session. With `progress` ≥ 80%, marks the item watched; below that, the session is kept as a resumable pause. The only endpoint that accepts [`?allow_rewatch=yes`](#rewatches). |
+| [`POST /scrobble/stop`](/api-reference/simkl/scrobble-stop) | Ends the session. With `progress` ≥ 80% (or your [`min_progress`](/guides/scrobble#change-the-80-threshold)), marks the item watched; below that, the session is kept as a resumable pause. The only endpoint that accepts [`?allow_rewatch=yes`](#rewatches). |
 | [`POST /scrobble/checkin`](/api-reference/simkl/scrobble-checkin) | Like [`start`](/api-reference/simkl/scrobble-start), but Simkl **auto-marks the item watched when its computed progress reaches 100%** based on the item's runtime — no further calls needed from your app. Use this when you can't reliably hook into stop events. |
 
 <Note>
@@ -5137,7 +5137,7 @@ Simkl stores **one active scrobble session per show/movie/anime**. Calling `/scr
 
 ### Lifecycle at a glance
 
-Progress drives every transition. The 80% threshold is the only "magic number" you have to remember.
+Progress drives every transition. The 80% threshold is the only "magic number" you have to remember. It's the default — add `?min_progress=` (50–100) to a `stop`, `start` or `checkin` call to use your own; see [Changing the 80% threshold](/guides/scrobble#change-the-80-threshold).
 
 ```
                                      progress ≥ 80
@@ -7664,7 +7664,7 @@ Send `progress` plus exactly one of `movie`, `show`+`episode`, or `anime`+`episo
 
 - Replaces any existing session for this item and clears prior pauses.
 - Auto-expires after the calculated remaining runtime.
-- If a previous start/checkin reached **≥ 80 %** before this call, it is **auto-scrobbled** (marked watched) before the new session starts.
+- If a previous start/checkin reached **`min_progress`** (80 % unless you send `?min_progress=` on this call) before this call, it is **auto-scrobbled** (marked watched) before the new session starts.
 - Response shape: `id`, `action`, `progress`, plus the media object with `ids` (incl. external links Simkl knows about) and an `episode` block. For anime, the response includes both AniDB-canonical `season`/`number` and original `tvdb_season`/`tvdb_number`.
 
 #### Seek and scrub behavior
@@ -7706,6 +7706,8 @@ Finalizes the user's playback session. The `action` field in the response tells 
 |---|---|---|
 | **≥ 80** | `scrobble` | Item is marked watched. |
 | **< 80** | `pause` | Session is saved as a paused playback. |
+
+**80 is the default.** Add `?min_progress=` to the URL to use your own threshold between 50 and 100 — for example `?min_progress=90` to mark watched only near the end. See the `min_progress` parameter below.
 
 When `progress < 80`, the session is kept as a **resumable playback**, retrievable cross-device via [`GET /sync/playback/{type}`](/api-reference/simkl/get-playback-sessions). When `progress ≥ 80`, the item is marked watched and no playback is saved. See the [Playback overview](/api-reference/playback) for retention.
 
@@ -7985,8 +7987,23 @@ Every item in a single response has the same `endpoint_type` — you never get a
 | `page` | `1` | Hard-capped server-side at `20`. Higher values silently clamp. |
 | `limit` | `10` | Hard-capped server-side at `50`. Higher values silently clamp. |
 | `extended` | `simple` | `full` adds `all_titles[]`, `url`, `ep_count` (TV/anime), `rank` (nullable), `status` (TV/anime), and a `ratings` block. |
+| `sort` | `relevance` | Result order: `relevance`, `release-date`, `last-air-date` (TV and anime only), `title` or `rank` — see **Sorting** below. Any other value is a `400`. |
 
 Returns paginated results with `X-Pagination-*` headers — see [Pagination](/conventions/pagination) for the standard paginator pattern.
+
+#### Sorting
+
+`sort` changes the order of the matches, not which titles match, and paging keeps it — page 2 continues where page 1 stopped.
+
+| `sort` | Order |
+|---|---|
+| `relevance` *(default)* | Best match first, then the more popular title. |
+| `release-date` | Newest release first. Upcoming titles come before released ones. |
+| `last-air-date` | Most recently aired first. **TV and anime only** — on `/search/movie` it returns `400`. |
+| `title` | A–Z. Titles that start with punctuation or a number come before `A`. |
+| `rank` | Simkl rank, most popular first. |
+
+Values are case-insensitive, and an empty `sort=` means `relevance`. Any other value returns `400 wrong_parameter`, with the accepted values listed in `message`.
 
 #### Per-item fields by mode
 
@@ -8021,10 +8038,11 @@ Returns paginated results with `X-Pagination-*` headers — see [Pagination](/co
 
 | Status | When |
 |---|---|
+| `400 wrong_parameter` | `sort` is not one of the values above, or `last-air-date` on `/search/movie` |
 | `412 client_id_failed` | Missing or invalid `client_id` |
 | `500` | Server error |
 
-No `400` — invalid `page` / `limit` silently clamp to the server caps. No `404` — empty result is `[]` with status `200`.
+Invalid `page` / `limit` never return `400` — they silently clamp to the server caps. No `404` — empty result is `[]` with status `200`.
 
 <Tip>
 **Which IDs can I send/expect?** All accepted input identifiers and the keys you'll see echoed back in responses are listed at [**Standard media objects → Supported ID keys**](/conventions/standard-media-objects#supported-id-keys). Send every ID you have on writes — Simkl picks the first that resolves and ignores the rest. Reminder: `slug` is **response-only** (never send it on a request).
@@ -11677,6 +11695,26 @@ What's new across the Simkl API and these docs.
 For broader Simkl product news — apps, features, releases — follow [**@Simkl**](https://twitter.com/Simkl) on X.
 
 Use the **filter** in the right rail to narrow this changelog by tag.
+
+<Update label="2026-10-09" description="Original language and trailer types on title pages, search sorting, scrobble threshold">
+  <Badge icon="sparkles">New feature</Badge>
+
+  **Original language on title pages**
+
+  [`GET /tv/{id}`](/api-reference/simkl/get-tv-show), [`/anime/{id}`](/api-reference/simkl/get-anime) and [`/movies/{id}`](/api-reference/simkl/get-movie) now return `original_language`: a lower-case ISO 639-1 code such as `en` or `ja`, or `null` when none is on file. It's the same field as in the trending and calendar files, now available for any title. Movies keep their existing upper-case `language` as well.
+
+  **Trailer types**
+
+  Every video in `trailers` on the same three endpoints now has a `type`: `trailer`, `teaser`, `clip`, `featurette`, `behind_the_scenes`, `bloopers` or `opening_credits` (`null` when it has no kind on file). Filter on it to show only trailers, or to group extras. For movies and TV the list is ordered English first, then by `type`, then by size; anime isn't grouped by `type`.
+
+  **Sorting for text search**
+
+  [`GET /search/{type}`](/api-reference/simkl/search-by-text) takes a `sort` parameter: `relevance` (the default), `release-date`, `last-air-date` (TV and anime only), `title` or `rank`. Paging keeps the order. Any other value returns `400 wrong_parameter`.
+
+  **Choose your own scrobble threshold**
+
+  Add `?min_progress=` (50–100) to [`/scrobble/stop`](/api-reference/simkl/scrobble-stop) to set the progress at which a stop marks the item watched instead of saving a pause. On [`start`](/api-reference/simkl/scrobble-start) and [`checkin`](/api-reference/simkl/scrobble-checkin) it sets the same threshold for finishing the user's previous open session. The default stays 80. See [Changing the 80% threshold](/guides/scrobble#change-the-80-threshold).
+</Update>
 
 <Update label="2026-10-07" description="Trending by genre, and genres fixed in trending, DVD, calendar and list data">
   <Badge icon="sparkles">New feature</Badge>
@@ -17101,13 +17139,13 @@ If you only need a "Mark as watched" button without real-time progress reporting
 
 ## The lifecycle at a glance
 
-Four endpoints. The 80% threshold is the only "magic number" you have to remember.
+Four endpoints. The 80% threshold is the only "magic number" you have to remember — and you can [change it](#change-the-80-threshold) per call.
 
 | Endpoint | Call when | Effect |
 | - | - | - |
 | **[`start`](/api-reference/simkl/scrobble-start)** | Playback begins or resumes | Creates an active session and shows the title in the user's "Watching now" banner. |
 | **[`pause`](/api-reference/simkl/scrobble-pause)** | User pauses | Saves current `progress`. The session is resumable from any device on the same account. |
-| **[`stop`](/api-reference/simkl/scrobble-stop)** | User stops or playback ends | `progress ≥ 80` → marked **watched**. `progress < 80` → kept as a **saved playback** (resumable later). |
+| **[`stop`](/api-reference/simkl/scrobble-stop)** | User stops or playback ends | `progress ≥ 80` → marked **watched**. `progress < 80` → kept as a **saved playback** (resumable later). 80 is the default — see [`min_progress`](#change-the-80-threshold). |
 | **[`checkin`](/api-reference/simkl/scrobble-checkin)** | Fire-and-forget alternative | One call, no progress tracking. Server auto-completes shortly after the item's runtime expiry — typically within \~2 minutes. |
 
 <Tip>
@@ -17200,6 +17238,26 @@ sequenceDiagram
   * you used [`/scrobble/checkin`](/api-reference/simkl/scrobble-checkin) and Simkl's runtime-based progress reaches 100%, **or**
   * you separately call [`POST /sync/history`](/api-reference/simkl/add-to-history).
 </Note>
+
+## Changing the 80% threshold
+
+Add `?min_progress=` to the URL to choose where "stopped" turns into "watched" — any whole number from 50 to 100:
+
+```bash theme={"theme":{"light":"github-light","dark":"vesper"}}
+curl -X POST "https://api.simkl.com/scrobble/stop?min_progress=90&client_id=YOUR_CLIENT_ID&app-name=my-app-name&app-version=1.0" \
+  -H "Content-Type: application/json" \
+  -H "User-Agent: my-app-name/1.0" \
+  -H "Authorization: Bearer ACCESS_TOKEN" \
+  -d '{ "progress": 85, "movie": { "ids": { "simkl": 53536 } } }'
+```
+
+With `min_progress=90`, that stop at 85% returns `action: "pause"` and saves a resume point instead of marking the movie watched.
+
+* **[`stop`](/api-reference/simkl/scrobble-stop)** — `progress` at or above `min_progress` marks the item watched; below it saves a pause.
+* **[`start`](/api-reference/simkl/scrobble-start) and [`checkin`](/api-reference/simkl/scrobble-checkin)** — when they replace the user's previous open session, that session is marked watched only if it reached `min_progress`. Send the same value on every call so all the checks agree.
+* **[`pause`](/api-reference/simkl/scrobble-pause)** ignores it, and a check-in still completes at 100% of the runtime.
+
+Values above 100 count as 100 and values from 1 to 49 count as 50. Decimals are dropped, and `0` or an empty value means the default, 80. It only works in the URL — a `min_progress` key in the JSON body is ignored.
 
 ## Reference scrobbler implementations
 
